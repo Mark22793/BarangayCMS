@@ -1,0 +1,48 @@
+﻿@model IEnumerable<BarangayCMS.Web.Areas.Staff.ViewModels.HealthViewModel>
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@{
+    Layout = "~/Areas/Staff/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Clinical Records";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2><i class="bi bi-journal-medical text-dark"></i> Pangkalahatang Clinical / Check-up History</h2>
+        <a asp-area="Staff" asp-controller="Health" asp-action="Index" class="btn btn-secondary btn-sm">Bumalik sa Center</a>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            <table class="table table-bordered table-hover mb-0 align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Residente</th>
+                        <th>Diagnosis / Sakit</th>
+                        <th>Petsa ng Konsultasyon</th>
+                        <th>Medikasyon / Rekomendasyon</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Any())
+                    {
+                        foreach (var item in Model)
+                        {
+                            <tr>
+                                <td><strong>@item.ResidentName</strong></td>
+                                <td class="text-danger fw-bold">@item.MedicalCondition</td>
+                                <td>@item.DateRecorded.ToString("MMMM dd, yyyy")</td>
+                                <td class="text-wrap">@item.Remarks</td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="4" class="text-center text-muted py-4">Walang nakatalang clinical history maliban sa bakuna.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

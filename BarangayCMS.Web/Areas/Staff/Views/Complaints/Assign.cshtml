@@ -1,0 +1,44 @@
+﻿@model BarangayCMS.Web.Areas.Staff.ViewModels.ComplaintViewModel
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+@{
+    Layout = "~/Areas/Staff/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Assign Case File";
+}
+
+<div class="container py-4" style="max-width: 550px;">
+    <div class="app-card app-card--pad">
+        <h5 class="fw-bold text-dark mb-1"><i class="bi bi-person-badge text-warning me-2"></i> Initiate Official Dispatch Assignment</h5>
+        <p class="text-muted small">Assigning incident dispute to active field officers or Lupon members.</p>
+
+        <div class="p-3 bg-light rounded-3 my-3 border text-start">
+            <strong>Complainant:</strong> @Model.ResidentFullName <br />
+            <strong>Case Subject:</strong> @Model.Subject <br />
+            <strong>Current Status:</strong> <span class="badge bg-secondary">@Model.Status</span>
+        </div>
+
+        <form asp-area="Staff" asp-controller="Complaints" asp-action="Assign" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Id" />
+
+            <div class="mb-3">
+                <label class="form-label fw-bold small text-secondary">Select Handling Officer Designation</label>
+                <select class="form-select" required>
+                    <option value="">-- Select Authority Unit --</option>
+                    <option value="Lupon">Lupon Tagapamayapa (Mediation Committee)</option>
+                    <option value="Barangay Tanod">Barangay Tanod (Security Enforcement)</option>
+                    <option value="Chief Executive">Barangay Captain / Secretary Direct</option>
+                </select>
+            </div>
+
+            <div class="alert alert-warning py-2 small">
+                <i class="bi bi-info-circle me-1"></i> Dispatch action upgrades the tracking state status directly to <strong>Assigned</strong>.
+            </div>
+
+            <div class="d-flex justify-content-between border-top pt-3 mt-4">
+                <a asp-area="Staff" asp-controller="Complaints" asp-action="Index" class="btn btn-light border px-4 fw-semibold rounded-3">Return</a>
+                <button type="submit" class="btn btn-warning text-dark px-4 fw-bold rounded-3">Confirm Official Dispatch</button>
+            </div>
+        </form>
+    </div>
+</div>

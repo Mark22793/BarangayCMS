@@ -9,17 +9,20 @@ using Microsoft.AspNetCore.Mvc;
 namespace BarangayCMS.Areas.Staff.Controllers
 {
     [Area("Staff")]
+    [Route("Staff/[controller]")]
+    [Route("Staff/Environment")]
     public class EnvironmentsController : Controller
     {
         private readonly ApplicationDbContext _context;
 
-        // Constructor Injection para sa totoong DB connection
         public EnvironmentsController(ApplicationDbContext context)
         {
             _context = context;
         }
 
-        // GET: /Staff/Environment/Index
+        // GET: /Staff/Environment o /Staff/Environments
+        [HttpGet]
+        [HttpGet("Index")]
         public IActionResult Index()
         {
             var list = _context.EnvironmentRecords
@@ -27,9 +30,9 @@ namespace BarangayCMS.Areas.Staff.Controllers
                 {
                     EnvironmentRecordId = e.EnvironmentRecordId,
                     ActivityName = e.ActivityName,
-                    Location = e.LocationArea, // Naka-map sa LocationArea ng DB
-                    ActivityDate = e.InspectionOrActivityDate, // Naka-map sa InspectionOrActivityDate ng DB
-                    Description = e.Remarks // Naka-map sa Remarks ng DB
+                    Location = e.LocationArea,
+                    ActivityDate = e.InspectionOrActivityDate,
+                    Description = e.Remarks
                 })
                 .OrderByDescending(e => e.ActivityDate)
                 .ToList();
@@ -38,6 +41,7 @@ namespace BarangayCMS.Areas.Staff.Controllers
         }
 
         // GET: /Staff/Environment/Details/5
+        [HttpGet("Details/{id}")]
         public IActionResult Details(int id)
         {
             var item = _context.EnvironmentRecords
@@ -57,13 +61,14 @@ namespace BarangayCMS.Areas.Staff.Controllers
         }
 
         // GET: /Staff/Environment/Create
+        [HttpGet("Create")]
         public IActionResult Create()
         {
             return View(new EnvironmentViewModel());
         }
 
         // POST: /Staff/Environment/Create
-        [HttpPost]
+        [HttpPost("Create")]
         [ValidateAntiForgeryToken]
         public IActionResult Create(EnvironmentViewModel model)
         {
@@ -75,19 +80,20 @@ namespace BarangayCMS.Areas.Staff.Controllers
                     LocationArea = model.Location,
                     InspectionOrActivityDate = model.ActivityDate,
                     Remarks = model.Description,
-                    WasteManagementStatus = "Compliant", // Default value para sa model mo
-                    InspectorName = "Barangay Staff",   // Default value
+                    WasteManagementStatus = "Compliant",
+                    InspectorName = "Barangay Staff",
                     DateLogged = DateTime.Now
                 };
 
                 _context.EnvironmentRecords.Add(newRecord);
-                _context.SaveChanges(); // Sine-save sa SQL Database
+                _context.SaveChanges();
                 return RedirectToAction(nameof(Index));
             }
             return View(model);
         }
 
         // GET: /Staff/Environment/Edit/5
+        [HttpGet("Edit/{id}")]
         public IActionResult Edit(int id)
         {
             var item = _context.EnvironmentRecords.FirstOrDefault(e => e.EnvironmentRecordId == id);
@@ -106,11 +112,10 @@ namespace BarangayCMS.Areas.Staff.Controllers
         }
 
         // POST: /Staff/Environment/Edit/5
-        [HttpPost]
+        [HttpPost("Edit/{id?}")]
         [ValidateAntiForgeryToken]
         public IActionResult Edit(int id, EnvironmentViewModel model)
         {
-            // The form posts the PK as "EnvironmentRecordId" (not a route "id"), so id can be 0.
             if (id == 0) id = model.EnvironmentRecordId;
 
             if (ModelState.IsValid)
@@ -123,13 +128,14 @@ namespace BarangayCMS.Areas.Staff.Controllers
                 existing.InspectionOrActivityDate = model.ActivityDate;
                 existing.Remarks = model.Description;
 
-                _context.SaveChanges(); // Sinesave ang Update sa SQL Database
+                _context.SaveChanges();
                 return RedirectToAction(nameof(Index));
             }
             return View(model);
         }
 
         // GET: /Staff/Environment/Delete/5
+        [HttpGet("Delete/{id}")]
         public IActionResult Delete(int id)
         {
             var item = _context.EnvironmentRecords
@@ -149,7 +155,7 @@ namespace BarangayCMS.Areas.Staff.Controllers
         }
 
         // POST: /Staff/Environment/Delete/5
-        [HttpPost, ActionName("Delete")]
+        [HttpPost("Delete/{id?}"), ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public IActionResult DeleteConfirmed(int id)
         {
@@ -157,7 +163,7 @@ namespace BarangayCMS.Areas.Staff.Controllers
             if (item != null)
             {
                 _context.EnvironmentRecords.Remove(item);
-                _context.SaveChanges(); // Permanenteng binubura sa SQL
+                _context.SaveChanges();
             }
             return RedirectToAction(nameof(Index));
         }

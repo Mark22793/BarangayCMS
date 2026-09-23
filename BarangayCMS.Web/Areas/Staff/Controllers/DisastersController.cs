@@ -12,18 +12,13 @@ using System.Threading.Tasks;
 namespace BarangayCMS.Areas.Staff.Controllers
 {
     [Area("Staff")]
+    [Route("Staff/[controller]")]
+    [Route("Staff/Disaster")]
     public class DisastersController : Controller
     {
-        // ✅ DATABASE-DRIVEN: Ginagamit na ang parehong ApplicationDbContext (at
-        // parehong Disasters table) na ginagamit ng Admin Portal. Wala nang
-        // static/mock na listahan — iisa ang source of truth ang database.
         private readonly ApplicationDbContext _context;
         private readonly IEvacuationService _evacuationService;
 
-        // Parehong separator na ginagamit ng Admin/Disaster para i-encode ang
-        // Location sa loob ng IncidentName (walang hiwalay na Location column ang
-        // Disaster entity). Nagbabahagi kami ng eksaktong convention para
-        // magkapareho ang nakikita ng Admin at Staff.
         private const string LocationSeparator = " | Lokasyon: ";
 
         public DisastersController(ApplicationDbContext context, IEvacuationService evacuationService)
@@ -32,22 +27,23 @@ namespace BarangayCMS.Areas.Staff.Controllers
             _evacuationService = evacuationService;
         }
 
-        // GET: /Staff/Disasters/Index
+        // GET: /Staff/Disaster o /Staff/Disasters
+        [HttpGet]
+        [HttpGet("Index")]
         public async Task<IActionResult> Index()
         {
             var disasters = await _context.Disasters
                 .OrderByDescending(d => d.OccurrenceDate)
                 .ToListAsync();
 
-            // 🏫 Read-only na evacuation snapshot mula sa parehong Evacuation module
-            // na pinamamahalaan ng Admin (walang hiwalay na Staff data source).
             ViewBag.Evacuation = await _evacuationService.GetPublicEvacuationInfoAsync();
 
             var list = disasters.Select(MapToViewModel).ToList();
             return View(list);
         }
 
-        // GET: /Staff/Disasters/Manage/5 (tinatawag ng 'Track' button)
+        // GET: /Staff/Disasters/Manage/5
+        [HttpGet("Manage/{id}")]
         public async Task<IActionResult> Manage(int id)
         {
             var item = await _context.Disasters.FindAsync(id);
@@ -56,6 +52,7 @@ namespace BarangayCMS.Areas.Staff.Controllers
         }
 
         // GET: /Staff/Disasters/Details/5
+        [HttpGet("Details/{id}")]
         public async Task<IActionResult> Details(int id)
         {
             var item = await _context.Disasters.FindAsync(id);
@@ -64,13 +61,14 @@ namespace BarangayCMS.Areas.Staff.Controllers
         }
 
         // GET: /Staff/Disasters/Create
+        [HttpGet("Create")]
         public IActionResult Create()
         {
             return View(new DisasterViewModel { OccurrenceDate = DateTime.Now });
         }
 
         // POST: /Staff/Disasters/Create
-        [HttpPost]
+        [HttpPost("Create")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(DisasterViewModel model)
         {
@@ -98,6 +96,7 @@ namespace BarangayCMS.Areas.Staff.Controllers
         }
 
         // GET: /Staff/Disasters/Edit/5
+        [HttpGet("Edit/{id}")]
         public async Task<IActionResult> Edit(int id)
         {
             var item = await _context.Disasters.FindAsync(id);
@@ -106,7 +105,7 @@ namespace BarangayCMS.Areas.Staff.Controllers
         }
 
         // POST: /Staff/Disasters/Edit/5
-        [HttpPost]
+        [HttpPost("Edit/{id?}")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, DisasterViewModel model)
         {
@@ -133,6 +132,7 @@ namespace BarangayCMS.Areas.Staff.Controllers
         }
 
         // GET: /Staff/Disasters/Delete/5
+        [HttpGet("Delete/{id}")]
         public async Task<IActionResult> Delete(int id)
         {
             var item = await _context.Disasters.FindAsync(id);
@@ -141,7 +141,7 @@ namespace BarangayCMS.Areas.Staff.Controllers
         }
 
         // POST: /Staff/Disasters/Delete/5
-        [HttpPost, ActionName("Delete")]
+        [HttpPost("Delete/{id?}"), ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
@@ -154,10 +154,6 @@ namespace BarangayCMS.Areas.Staff.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // ==========================================================
-        // Mapping helpers — parehong convention ng Admin/Disaster para
-        // magkatugma ang datos sa dalawang portal.
-        // ==========================================================
         private static DisasterViewModel MapToViewModel(Disaster d)
         {
             var description = d.IncidentName;
@@ -170,7 +166,6 @@ namespace BarangayCMS.Areas.Staff.Controllers
                 location = parts.Length > 1 ? parts[1] : location;
             }
 
-            // Ang "Active" ay kapag bukas pa ang evacuation o ongoing ang relief.
             var isActive = string.Equals(d.EvacuationCenterStatus, "Open", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(d.ReliefDistributionStatus, "Ongoing", StringComparison.OrdinalIgnoreCase);
 

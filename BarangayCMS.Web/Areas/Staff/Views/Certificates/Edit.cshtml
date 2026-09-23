@@ -1,69 +1,77 @@
 ﻿@model BarangayCMS.Web.Areas.Staff.ViewModels.CertificateViewModel
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
 @{
-    Layout = null;
+    Layout = "~/Areas/Staff/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Update Request & Issuance";
 }
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8" />
-    <title>Update Status</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-</head>
-<body class="bg-light">
-    <div class="container py-5" style="max-width: 600px;">
-        <div class="card border-0 shadow-sm p-4 rounded-3">
-            <h5 class="fw-bold text-dark mb-1">
-                <i class="bi bi-pencil-square text-primary me-2"></i>Update Request & Issuance
-            </h5>
-            <p class="text-muted small mb-4">Maaari mong palitan ang uri ng dokumento o baguhin ang status nito para maprint.</p>
 
-            <form asp-area="Staff" asp-controller="Certificates" asp-action="Edit" method="post">
-                @Html.AntiForgeryToken()
-                <input type="hidden" asp-for="CertificateId" />
+<div class="container py-4" style="max-width: 600px;">
+    <div class="app-card app-card--pad">
+        <h5 class="fw-bold text-dark mb-1">
+            <i class="bi bi-pencil-square text-warning me-2"></i>Update Request & Issuance
+        </h5>
+        <p class="text-muted small mb-4">Maaari mong palitan ang uri ng dokumento o baguhin ang status nito para maprint.</p>
 
-                <!-- Resident Select -->
-                <div class="mb-3">
-                    <label asp-for="ResidentId" class="form-label small fw-bold text-secondary">Resident</label>
-                    <select asp-for="ResidentId" class="form-select form-select-sm" asp-items="ViewBag.ResidentsList"></select>
-                    <span asp-validation-for="ResidentId" class="text-danger small"></span>
-                </div>
+        <form asp-area="Staff" asp-controller="Certificates" asp-action="Edit" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Id" />
 
-                <!-- Certificate Type Select -->
-                <div class="mb-3">
-                    <label asp-for="CertificateType" class="form-label small fw-bold text-secondary">Certificate Type</label>
-                    <select asp-for="CertificateType" class="form-select form-select-sm">
-                        <option value="Barangay Clearance">Barangay Clearance</option>
-                        <option value="Certificate of Indigency">Certificate of Indigency</option>
-                        <option value="Certificate of Residency">Certificate of Residency</option>
-                        <option value="Business Permit Clearance">Business Permit Clearance</option>
-                    </select>
-                    <span asp-validation-for="CertificateType" class="text-danger small"></span>
-                </div>
+            <!-- Resident Select -->
+            <div class="mb-3">
+                <label asp-for="ResidentId" class="form-label small fw-bold text-secondary">Resident</label>
+                <select asp-for="ResidentId" class="form-select" asp-items="Model.ResidentList">
+                    <option value="">-- Select Resident --</option>
+                </select>
+                <span asp-validation-for="ResidentId" class="text-danger small"></span>
+            </div>
 
-                <!-- Status Select -->
-                <div class="mb-4">
-                    <label asp-for="Status" class="form-label small fw-bold text-secondary">Document Status</label>
-                    <select asp-for="Status" class="form-select form-select-sm">
-                        <option value="Pending">Pending</option>
-                        <option value="Approved">Approved</option>
-                        <option value="Ready for Pickup">Ready for Pickup</option>
-                        <option value="Issued">Issued / Ready for Print</option>
-                        <option value="Done">Done</option>
-                        <option value="Rejected">Rejected</option>
-                    </select>
-                    <span asp-validation-for="Status" class="text-danger small"></span>
-                </div>
+            <!-- Certificate Type Select -->
+            <div class="mb-3">
+                <label asp-for="CertificateType" class="form-label small fw-bold text-secondary">Certificate Type</label>
+                <select asp-for="CertificateType" class="form-select">
+                    <option value="Barangay Clearance">Barangay Clearance</option>
+                    <option value="Certificate of Indigency">Certificate of Indigency</option>
+                    <option value="Certificate of Residency">Certificate of Residency</option>
+                    <option value="Business Permit Clearance">Business Permit Clearance</option>
+                </select>
+                <span asp-validation-for="CertificateType" class="text-danger small"></span>
+            </div>
 
-                <!-- Action Buttons -->
-                <div class="d-flex justify-content-end gap-2">
-                    <a asp-action="Index" class="btn btn-sm btn-light border px-3">Discard</a>
-                    <button type="submit" class="btn btn-sm btn-success px-4 fw-semibold">
-                        <i class="bi bi-check-lg me-1"></i>Update Log
-                    </button>
-                </div>
-            </form>
-        </div>
+            <!-- Purpose / Dahilan ng Pagkuha -->
+            <div class="mb-3">
+                <label asp-for="Purpose" class="form-label small fw-bold text-secondary">Purpose / Dahilan ng Pagkuha</label>
+                <input asp-for="Purpose" class="form-control" placeholder="Halimbawa: Local Employment, Scholarship, ID Requirement" />
+                <span asp-validation-for="Purpose" class="text-danger small"></span>
+            </div>
+
+            <!-- Status Select -->
+            <div class="mb-4">
+                <label asp-for="Status" class="form-label small fw-bold text-secondary">Document Status</label>
+                <select asp-for="Status" class="form-select">
+                    <option value="Pending">Pending</option>
+                    <option value="Approved">Approved</option>
+                    <option value="Ready for Pickup">Ready for Pickup</option>
+                    <option value="Issued">Issued / Ready for Print</option>
+                    <option value="Done">Done</option>
+                    <option value="Rejected">Rejected</option>
+                </select>
+                <span asp-validation-for="Status" class="text-danger small"></span>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-flex justify-content-end gap-2 border-top pt-3">
+                <a asp-area="Staff" asp-controller="Certificates" asp-action="Index" class="btn btn-light border px-3 fw-semibold rounded-3">Discard</a>
+                <button type="submit" class="btn btn-warning text-dark px-4 fw-semibold rounded-3">
+                    <i class="bi bi-check-lg me-1"></i>Update Log
+                </button>
+            </div>
+        </form>
     </div>
-</body>
-</html>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

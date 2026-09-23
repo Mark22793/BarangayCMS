@@ -1,57 +1,58 @@
-@model BarangayCMS.Areas.Staff.ViewModels.HealthViewModel
+@model BarangayCMS.Web.Areas.Staff.ViewModels.HealthViewModel
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
-
 @{
     Layout = "~/Areas/Staff/Views/Shared/_Layout.cshtml";
-    ViewData["Title"] = "Update Health Record";
+    ViewData["Title"] = "I-edit ang Tala sa Health Center";
 
     var bloodTypes = new[] { "N/A", "A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-" };
     var classes = new[] { "General", "Infant", "Child", "Maternal / Pregnant", "Senior Citizen", "PWD" };
 }
 
-<div class="page-header">
+<div class="page-header mb-4 d-flex justify-content-between align-items-center">
     <div>
-        <h1 class="page-header__title"><i class="bi bi-pencil-square"></i> Update Case File</h1>
-        <p class="page-header__sub">Baguhin ang diagnosis, vital signs, o dagdagan ang clinical remarks ng pasyente.</p>
+        <h1 class="page-header__title fw-bold text-dark"><i class="bi bi-pencil-square text-primary me-2"></i>I-edit ang Tala sa Health Center</h1>
+        <p class="page-header__sub text-muted">I-update ang medikal na impormasyon, vital signs, at klinikal na tala ng pasyente.</p>
     </div>
-    <a asp-action="Index" class="btn btn-light border fw-semibold rounded-3"><i class="bi bi-arrow-left me-1"></i> Bumalik</a>
+    <a asp-area="Staff" asp-controller="Health" asp-action="Index" class="btn btn-light border fw-semibold rounded-3"><i class="bi bi-arrow-left me-1"></i> Bumalik</a>
 </div>
 
-<form asp-action="Edit" asp-route-id="@Model.Id" method="post">
+<form asp-area="Staff" asp-controller="Health" asp-action="Edit" asp-route-id="@Model.Id" method="post">
     @Html.AntiForgeryToken()
     <input type="hidden" asp-for="Id" />
-    <input type="hidden" asp-for="HealthRecordId" />
+
     <div asp-validation-summary="ModelOnly" class="alert alert-danger border-0 rounded-3 small"></div>
 
     <div class="row g-4">
         <div class="col-lg-8">
-            <div class="app-card app-card--pad mb-4">
-                <h6 class="fw-bold text-uppercase text-muted small mb-3"><i class="bi bi-person-vcard me-1"></i> Patient &amp; Diagnosis</h6>
+            <div class="card border-0 shadow-sm p-4 mb-4 rounded-3">
+                <h6 class="fw-bold text-uppercase text-muted small mb-3"><i class="bi bi-person-vcard me-1"></i> Pasyente at Diagnosis</h6>
 
                 <div class="mb-3">
-                    <label asp-for="ResidentId" class="form-label fw-semibold small"></label>
-                    <select asp-for="ResidentId" asp-items="Model.ResidentDataSource" class="form-select"></select>
+                    <label asp-for="ResidentId" class="form-label fw-semibold small">Pangalan ng Residente</label>
+                    <select asp-for="ResidentId" class="form-select" asp-items="@(ViewBag.Residents as SelectList)" required>
+                        <option value="">-- Pumili ng Residente / Pasyente --</option>
+                    </select>
                     <span asp-validation-for="ResidentId" class="text-danger small"></span>
                 </div>
 
                 <div class="mb-3">
-                    <label asp-for="MedicalCondition" class="form-label fw-semibold small"></label>
-                    <input asp-for="MedicalCondition" class="form-control" />
+                    <label asp-for="MedicalCondition" class="form-label fw-semibold small">Medikal na Kondisyon / Diagnosis / Serbisyo</label>
+                    <input asp-for="MedicalCondition" type="text" class="form-control" required />
                     <span asp-validation-for="MedicalCondition" class="text-danger small"></span>
                 </div>
 
                 <div class="mb-0">
-                    <label asp-for="Remarks" class="form-label fw-semibold small"></label>
+                    <label asp-for="Remarks" class="form-label fw-semibold small">Mga Tala / Remarks / Reseta ng Gamot</label>
                     <textarea asp-for="Remarks" class="form-control" rows="5"></textarea>
                     <span asp-validation-for="Remarks" class="text-danger small"></span>
                 </div>
             </div>
 
-            <div class="app-card app-card--pad">
-                <h6 class="fw-bold text-uppercase text-muted small mb-3"><i class="bi bi-clipboard2-pulse me-1"></i> Program &amp; Schedule</h6>
+            <div class="card border-0 shadow-sm p-4 rounded-3">
+                <h6 class="fw-bold text-uppercase text-muted small mb-3"><i class="bi bi-clipboard2-pulse me-1"></i> Programa at Petsa</h6>
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <label asp-for="HealthClassification" class="form-label fw-semibold small"></label>
+                        <label asp-for="HealthClassification" class="form-label fw-semibold small">Klasipikasyon</label>
                         <select asp-for="HealthClassification" class="form-select">
                             @foreach (var c in classes)
                             {
@@ -60,23 +61,22 @@
                         </select>
                     </div>
                     <div class="col-md-6">
-                        <label asp-for="AttendingHealthWorker" class="form-label fw-semibold small"></label>
-                        <input asp-for="AttendingHealthWorker" class="form-control" />
+                        <label asp-for="AttendingHealthWorker" class="form-label fw-semibold small">Attending Health Worker</label>
+                        <input asp-for="AttendingHealthWorker" type="text" class="form-control" />
                     </div>
                     <div class="col-md-6">
-                        <label asp-for="LastCheckupDate" class="form-label fw-semibold small"></label>
-                        <input asp-for="LastCheckupDate" class="form-control" type="date" />
-                        <span asp-validation-for="LastCheckupDate" class="text-danger small"></span>
+                        <label asp-for="LastCheckupDate" class="form-label fw-semibold small">Huling Check-up</label>
+                        <input asp-for="LastCheckupDate" type="date" class="form-control" />
                     </div>
                     <div class="col-md-6">
-                        <label asp-for="DateRecorded" class="form-label fw-semibold small"></label>
-                        <input asp-for="DateRecorded" class="form-control" type="date" />
+                        <label asp-for="DateRecorded" class="form-label fw-semibold small">Petsa ng Pagtatala</label>
+                        <input asp-for="DateRecorded" type="date" class="form-control" />
                         <span asp-validation-for="DateRecorded" class="text-danger small"></span>
                     </div>
                     <div class="col-12">
                         <div class="form-check mt-1">
                             <input asp-for="IsVaccinated" class="form-check-input" type="checkbox" id="isVax" />
-                            <label class="form-check-label fw-semibold small" for="isVax">Fully vaccinated</label>
+                            <label class="form-check-label fw-semibold small" for="isVax">Nabakunahan na (fully vaccinated)</label>
                         </div>
                     </div>
                 </div>
@@ -84,21 +84,21 @@
         </div>
 
         <div class="col-lg-4">
-            <div class="app-card app-card--pad">
+            <div class="card border-0 shadow-sm p-4 rounded-3">
                 <h6 class="fw-bold text-uppercase text-muted small mb-3"><i class="bi bi-activity me-1"></i> Vital Signs</h6>
 
                 <div class="mb-3">
-                    <label asp-for="WeightKg" class="form-label fw-semibold small"></label>
+                    <label asp-for="WeightKg" class="form-label fw-semibold small">Timbang (kg)</label>
                     <input asp-for="WeightKg" id="weightInput" type="number" step="0.1" min="0" class="form-control" />
                     <span asp-validation-for="WeightKg" class="text-danger small"></span>
                 </div>
                 <div class="mb-3">
-                    <label asp-for="HeightCm" class="form-label fw-semibold small"></label>
+                    <label asp-for="HeightCm" class="form-label fw-semibold small">Taas (cm)</label>
                     <input asp-for="HeightCm" id="heightInput" type="number" step="0.1" min="0" class="form-control" />
                     <span asp-validation-for="HeightCm" class="text-danger small"></span>
                 </div>
                 <div class="mb-3">
-                    <label asp-for="BloodType" class="form-label fw-semibold small"></label>
+                    <label asp-for="BloodType" class="form-label fw-semibold small">Blood Type</label>
                     <select asp-for="BloodType" class="form-select">
                         @foreach (var b in bloodTypes)
                         {
@@ -107,18 +107,18 @@
                     </select>
                 </div>
 
-                <div class="p-3 rounded-3 text-center" style="background: var(--surface-alt); border: 1px dashed var(--border);">
+                <div class="p-3 rounded-3 text-center bg-light border border-dashed">
                     <div class="text-muted small fw-semibold text-uppercase">Body Mass Index</div>
-                    <div class="fw-bold" style="font-size: 1.9rem; color: var(--accent);" id="bmiValue">—</div>
-                    <span class="badge rounded-pill" id="bmiCategory" style="background: var(--accent-soft); color: var(--accent);">Auto-calculated</span>
+                    <div class="fw-bold text-primary display-6" id="bmiValue">—</div>
+                    <span class="badge bg-primary-subtle text-primary rounded-pill" id="bmiCategory">Auto-calculated</span>
                 </div>
             </div>
         </div>
     </div>
 
     <div class="d-flex justify-content-end gap-2 border-top pt-4 mt-4">
-        <a asp-action="Index" class="btn btn-light border px-4 fw-semibold rounded-3">Discard Changes</a>
-        <button type="submit" class="btn btn-success px-4 fw-bold rounded-3"><i class="bi bi-save me-1"></i> Update Case Log</button>
+        <a asp-area="Staff" asp-controller="Health" asp-action="Index" class="btn btn-light border px-4 fw-semibold rounded-3">Bumalik</a>
+        <button type="submit" class="btn btn-success px-4 fw-bold rounded-3"><i class="bi bi-save me-1"></i> I-update ang Record</button>
     </div>
 </form>
 

@@ -1,11 +1,11 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http; // Kailangan para sa IFormFile
 
-namespace BarangayCMS.Areas.Staff.ViewModels
+namespace BarangayCMS.Web.Areas.Staff.ViewModels
 {
     public class AnnouncementViewModel
     {
-        // Ginawang Id o AnnouncementId para maging flexible sa loop mo (@item.Id)
         public int Id { get; set; }
         public int AnnouncementId { get; set; }
 
@@ -21,11 +21,20 @@ namespace BarangayCMS.Areas.Staff.ViewModels
         [Display(Name = "Date Posted")]
         public DateTime DatePosted { get; set; } = DateTime.Now;
 
-        // 📌 Idinagdag para sumwak sa kailangan ng Index.cshtml table layout mo:
         public string Category { get; set; } = "General";
         public string AuthorName { get; set; } = "Staff";
         public DateTime PublishDate { get; set; } = DateTime.Now;
         public DateTime? ExpiryDate { get; set; }
         public bool IsPinned { get; set; }
+
+        // 🖼️ MGA PROPERTIES PARA SA LARAWAN (IMAGE UPLOAD & DISPLAY)
+        [Display(Name = "Upload Image")]
+        public IFormFile? ImageFile { get; set; }
+
+        [Display(Name = "Image URL")]
+        public string? ImageUrl { get; set; }
+
+        // Helper property para ma-check kung may larawan ang announcement
+        public bool HasImage => !string.IsNullOrEmpty(ImageUrl);
     }
 }

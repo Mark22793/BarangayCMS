@@ -1,30 +1,34 @@
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@inject BarangayCMS.BLL.Interfaces.IContactMessageService ContactMessageService
+@{
+    int staffUnread = 0;
+    try { staffUnread = await ContactMessageService.GetUnreadCountAsync(); } catch { }
+}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="@System.Globalization.CultureInfo.CurrentUICulture.Name">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Barangay Staff</title>
-
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 
-    @* Loaded in <head>, before the body paints, so the saved palette is applied with no flash of the default theme. *@
+    @* Loaded in <head>, before the body paints *@
     <script src="~/js/theme-switcher.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
     <div class="app-shell" id="appShell">
-        <div class="app-sidebar__backdrop no-print" onclick="document.getElementById('appShell').classList.remove('is-open')"></div>
+        <div class="app-sidebar__backdrop" onclick="document.getElementById('appShell').classList.remove('is-open')"></div>
 
         <!-- SIDEBAR -->
-        <aside class="app-sidebar no-print">
+        <aside class="app-sidebar">
             <div class="app-sidebar__brand">
-                <i class="bi bi-person-badge-fill"></i>
+                <i class="bi bi-shield-check"></i>
                 <div>
                     <h6 class="app-sidebar__brand-title">Barangay Staff</h6>
                     <span class="app-sidebar__brand-sub">Encoder Portal</span>
@@ -32,20 +36,20 @@
             </div>
 
             <nav class="app-nav">
-                <a asp-area="Staff" asp-controller="StaffDashboard" asp-action="Index" class="app-nav__link"><i class="bi bi-grid-1x2-fill"></i> Dashboard</a>
-                <a asp-area="Staff" asp-controller="Residents" asp-action="Index" class="app-nav__link"><i class="bi bi-people-fill"></i> Residents</a>
-                <a asp-area="Staff" asp-controller="Certificates" asp-action="Index" class="app-nav__link"><i class="bi bi-file-earmark-text-fill"></i> Certificates</a>
-                <a asp-area="Staff" asp-controller="Complaints" asp-action="Index" class="app-nav__link"><i class="bi bi-chat-left-text-fill"></i> Complaints</a>
-                <a asp-area="Staff" asp-controller="Disasters" asp-action="Index" class="app-nav__link"><i class="bi bi-exclamation-triangle-fill"></i> Disaster Risk</a>
-                <a asp-area="Staff" asp-controller="Environments" asp-action="Index" class="app-nav__link"><i class="bi bi-tree-fill"></i> Environment</a>
-                <a asp-area="Staff" asp-controller="Health" asp-action="Index" class="app-nav__link"><i class="bi bi-heart-pulse-fill"></i> Health Center</a>
-                <a asp-area="Staff" asp-controller="Announcements" asp-action="Index" class="app-nav__link"><i class="bi bi-megaphone-fill"></i> Announcements</a>
-                <a asp-area="Staff" asp-controller="Reports" asp-action="Index" class="app-nav__link"><i class="bi bi-graph-up"></i> Reports</a>
-                <a asp-area="Staff" asp-controller="Help" asp-action="Index" class="app-nav__link"><i class="bi bi-life-preserver"></i> Help System</a>
+                <a href="/Staff/Dashboard" class="app-nav__link"><i class="bi bi-grid-1x2-fill"></i> @L["Nav.Dashboard"]</a>
+                <a href="/Staff/Residents" class="app-nav__link"><i class="bi bi-people-fill"></i> @L["Nav.Residents"]</a>
+                <a href="/Staff/Certificates" class="app-nav__link"><i class="bi bi-file-earmark-text-fill"></i> @L["Nav.Certificates"]</a>
+                <a href="/Staff/Complaints" class="app-nav__link"><i class="bi bi-chat-left-text-fill"></i> @L["Nav.Complaints"]</a>
+                <a href="/Staff/Disaster" class="app-nav__link"><i class="bi bi-shield-exclamation"></i> Disaster Risk</a>
+                <a href="/Staff/Environment" class="app-nav__link"><i class="bi bi-tree-fill"></i> @L["Nav.Environment"]</a>
+                <a href="/Staff/Health" class="app-nav__link"><i class="bi bi-heart-pulse-fill"></i> Health Center</a>
+                <a href="/Staff/Announcements" class="app-nav__link"><i class="bi bi-megaphone-fill"></i> @L["Nav.Announcements"]</a>
+                <a href="/Staff/Reports" class="app-nav__link"><i class="bi bi-graph-up-arrow"></i> @L["Nav.Reports"]</a>
+                <a href="/Staff/Help" class="app-nav__link"><i class="bi bi-life-preserver"></i> Help System</a>
 
                 <hr class="app-nav__divider" />
                 <a href="#" data-bs-toggle="modal" data-bs-target="#logoutModal" class="app-nav__link app-nav__link--danger">
-                    <i class="bi bi-box-arrow-left"></i> Log Out
+                    <i class="bi bi-box-arrow-right"></i> Log Out
                 </a>
             </nav>
 
@@ -54,7 +58,7 @@
 
         <!-- MAIN COLUMN -->
         <div class="app-main">
-            <header class="app-topbar no-print">
+            <header class="app-topbar">
                 <div class="d-flex align-items-center gap-2">
                     <button class="app-sidebar-toggle" type="button" aria-label="Toggle menu"
                             onclick="document.getElementById('appShell').classList.toggle('is-open')">
@@ -63,40 +67,68 @@
                     <span class="app-topbar__title"><i class="bi bi-calendar3 me-1"></i> Encoder Session Active</span>
                 </div>
                 <div class="app-topbar__actions">
+                    <!-- 🌐 LANGUAGE SELECTOR -->
+                    <partial name="_LanguageSelector" />
+                    
+                    <!-- 📥 MESSAGES -->
+                    <a href="/Staff/Messages" class="app-topbar__icon-btn @(staffUnread > 0 ? "has-unread" : "")"
+                       title="@L["Nav.Messages"]" aria-label="@(staffUnread > 0 ? $"{L["Nav.Messages"]}, {staffUnread}" : L["Nav.Messages"].Value)">
+                        <i class="bi bi-envelope-fill"></i>
+                        @if (staffUnread > 0)
+                        {
+                            <span class="app-topbar__badge" aria-hidden="true">@(staffUnread > 99 ? "99+" : staffUnread.ToString())</span>
+                        }
+                    </a>
                     <div class="dropdown">
                         <button class="btn btn-light btn-sm dropdown-toggle fw-semibold" type="button" data-bs-toggle="dropdown">
                             <i class="bi bi-person-circle me-1"></i> Staff Encoder
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 mt-2">
-                            <li><a class="dropdown-item small py-2 text-danger" href="#" data-bs-toggle="modal" data-bs-target="#logoutModal"><i class="bi bi-power me-2"></i>Sign Out</a></li>
+                            <li><a class="dropdown-item small py-2 text-danger" href="#" data-bs-toggle="modal" data-bs-target="#logoutModal"><i class="bi bi-power me-2"></i>Log Out</a></li>
                         </ul>
                     </div>
                 </div>
             </header>
 
             <main class="app-content">
+                @if (TempData["SuccessMessage"] != null)
+                {
+                    <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm d-flex align-items-center" role="status">
+                        <i class="bi bi-check-circle-fill me-2"></i>
+                        <span>@TempData["SuccessMessage"]</span>
+                        <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+                @if (TempData["ErrorMessage"] != null)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm d-flex align-items-center" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        <span>@TempData["ErrorMessage"]</span>
+                        <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
                 @RenderBody()
             </main>
 
-            <footer class="app-footer no-print">
+            <footer class="app-footer">
                 &copy; 2026 Comprehensive Barangay Management and Service System &middot; Encoder Portal
             </footer>
         </div>
     </div>
 
     <!-- LOG OUT CONFIRMATION MODAL -->
-    <div class="modal fade no-print" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
+    <div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" style="max-width: 400px;">
-            <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-content border-0 shadow">
                 <div class="modal-body text-center p-4">
-                    <div class="mb-3"><i class="bi bi-box-arrow-left text-danger display-4"></i></div>
-                    <h5 class="fw-bold text-dark mb-2" id="logoutModalLabel">Confirm Log Out</h5>
-                    <p class="text-muted small mb-4">Are you sure you want to log out from the Encoder Portal? Unsaved changes might not be saved.</p>
+                    <div class="mb-3"><i class="bi bi-box-arrow-right text-danger display-4"></i></div>
+                    <h5 class="fw-bold text-dark mb-2" id="logoutModalLabel">Log Out</h5>
+                    <p class="text-muted small mb-4">Are you sure you want to log out of your session?</p>
                     <form asp-area="" asp-controller="Account" asp-action="Logout" method="post">
                         @Html.AntiForgeryToken()
                         <div class="d-flex gap-2">
                             <button type="button" class="btn btn-light w-50 py-2 fw-semibold border rounded-3" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-danger w-50 py-2 fw-semibold rounded-3">Yes, Log Out</button>
+                            <button type="submit" class="btn btn-danger w-50 py-2 fw-semibold rounded-3">Log Out</button>
                         </div>
                     </form>
                 </div>
@@ -104,15 +136,12 @@
         </div>
     </div>
 
-    @* Floating appearance switcher: Civic Navy / Coastal Teal / Midnight Slate. *@
     <partial name="~/Views/Shared/_ThemeSwitcher.cshtml" />
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Wire up the floating appearance switcher.
         if (window.BmsTheme) { window.BmsTheme.initSwitcher(); }
 
-        // Highlight the active sidebar link based on the current URL.
         (function () {
             var path = window.location.pathname.toLowerCase().replace(/\/+$/, "");
             var links = document.querySelectorAll(".app-sidebar .app-nav__link");
@@ -123,8 +152,8 @@
                     best = link; bestLen = href.length;
                 }
             });
-            if (!best && (path === "/staff" || path.indexOf("/staff/staffdashboard") === 0)) {
-                best = document.querySelector('.app-nav__link[href*="StaffDashboard"]');
+            if (!best && (path === "/staff" || path.indexOf("/staff/dashboard") === 0)) {
+                best = document.querySelector('.app-nav__link[href="/Staff/Dashboard"]');
             }
             if (best) { best.classList.add("active"); }
         })();

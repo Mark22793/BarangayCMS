@@ -1,38 +1,46 @@
-﻿@model BarangayCMS.Areas.Staff.ViewModels.HealthViewModel
+﻿@model BarangayCMS.Web.Areas.Staff.ViewModels.HealthViewModel
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 @{
-    Layout = null;
+    Layout = "~/Areas/Staff/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Burahin ang Tala";
 }
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8" />
-    <title>Delete Health Log</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-</head>
-<body class="bg-light">
-    <div class="container py-5" style="max-width: 550px;">
-        <div class="card border-0 shadow-sm p-4 rounded-3 border-top border-danger border-4">
-            <div class="text-center text-danger mb-3">
-                <i class="bi bi-heart-break-fill fs-1"></i>
-                <h5 class="fw-bold text-dark mt-2 mb-1">Buruhing muli ang Medical Record na ito?</h5>
-                <p class="text-muted small">Ang pagtanggal ay permanenteng mawawala sa sistemang pang-kalusugan ng barangay.</p>
-            </div>
 
-            <div class="bg-light p-3 rounded-2 mb-4 border small text-start">
-                <div class="mb-1"><strong>Patient Name:</strong> <span class="text-secondary">@Model.ResidentFullName</span></div>
-                <div><strong>Condition Logged:</strong> <span class="text-secondary">@Model.MedicalCondition</span></div>
-            </div>
+<div class="container mt-4" style="max-width: 600px;">
+    <div class="card shadow-sm border-0 rounded-3">
+        <div class="card-header bg-danger text-white py-3">
+            <h5 class="mb-0 fw-bold"><i class="bi bi-trash-fill me-2"></i>Sigurado ka bang nais mong burahin ito?</h5>
+        </div>
+        <div class="card-body p-4">
+            <p class="text-muted mb-4">Ang aksyong ito ay hindi na maaaring bawiin o ibalik kapag nakumpirma.</p>
 
-            <form asp-action="Delete" asp-route-id="@Model.HealthRecordId" method="post">
+            <table class="table table-bordered bg-light">
+                <tr>
+                    <th class="w-40 bg-white">Pangalan ng Residente</th>
+                    <td>@Model.ResidentName</td>
+                </tr>
+                <tr>
+                    <th class="bg-white">Kondisyon / Diagnosis</th>
+                    <td>@Model.MedicalCondition</td>
+                </tr>
+                <tr>
+                    <th class="bg-white">Petsa ng Pagtatala</th>
+                    <td>@Model.DateRecorded.ToString("MMMM dd, yyyy")</td>
+                </tr>
+                <tr>
+                    <th class="bg-white">Mga Tala / Remarks</th>
+                    <td>@Model.Remarks</td>
+                </tr>
+            </table>
+
+            <form asp-area="Staff" asp-controller="Health" asp-action="Delete" method="post" class="mt-4">
                 @Html.AntiForgeryToken()
-                <input type="hidden" asp-for="HealthRecordId" />
-                <div class="d-flex justify-content-center gap-2">
-                    <a asp-action="Index" class="btn btn-sm btn-light border px-4">Abby / Cancel</a>
-                    <button type="submit" class="btn btn-sm btn-danger px-4 fw-semibold">Confirm Void Delete</button>
+                <input type="hidden" asp-for="Id" />
+
+                <div class="d-flex justify-content-between">
+                    <a asp-area="Staff" asp-controller="Health" asp-action="Index" class="btn btn-secondary px-4">Kanselahin</a>
+                    <button type="submit" class="btn btn-danger px-4 fw-bold">Oo, Burahin na</button>
                 </div>
             </form>
         </div>
     </div>
-</body>
-</html>
+</div>

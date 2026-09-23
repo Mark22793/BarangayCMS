@@ -1,0 +1,34 @@
+﻿@model BarangayCMS.Web.Areas.Staff.ViewModels.CertificateViewModel
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+@{
+    Layout = "~/Areas/Staff/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Delete Request Log";
+}
+
+<div class="container py-4" style="max-width: 550px;">
+    <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+        <div class="card-header bg-danger text-white p-3">
+            <h5 class="mb-0 fw-bold"><i class="bi bi-trash-fill me-2"></i>Delete Request Log</h5>
+        </div>
+        <div class="card-body p-4">
+            <h6 class="text-center text-dark fw-semibold mb-4">Are you sure you want to delete this certificate request entry?</h6>
+
+            <div class="p-3 rounded-3 mb-4" style="background-color: #f8d7da; border: 1px solid #f5c6cb;">
+                <p class="mb-1 text-danger"><strong>Resident:</strong> @Model.ResidentFullName</p>
+                <p class="mb-1 text-danger"><strong>Type:</strong> @Model.CertificateType</p>
+                <p class="mb-0 text-danger"><strong>Status:</strong> @Model.Status</p>
+            </div>
+
+            <form asp-area="Staff" asp-controller="Certificates" asp-action="Delete" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Id" />
+
+                <div class="d-flex justify-content-between gap-2 border-top pt-3">
+                    <a asp-area="Staff" asp-controller="Certificates" asp-action="Index" class="btn btn-light border px-4 fw-semibold rounded-3">Cancel</a>
+                    <button type="submit" class="btn btn-danger px-4 fw-bold rounded-3">Confirm Delete</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

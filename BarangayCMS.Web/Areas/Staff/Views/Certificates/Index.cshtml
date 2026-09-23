@@ -3,154 +3,114 @@
 
 @{
     Layout = "~/Areas/Staff/Views/Shared/_Layout.cshtml";
-    ViewData["Title"] = "Certificates Ledger";
+    ViewData["Title"] = "Certificates Management";
 }
 
-<div class="page-header">
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
     <div>
-        <small class="text-muted text-uppercase fw-bold">Documents</small>
-        <h1 class="page-header__title"><i class="bi bi-file-earmark-text-fill"></i> Certificates Ledger</h1>
-        <p class="page-header__sub">Issue, approve, and print barangay certificates for residents.</p>
+        <h1 class="page-header__title"><i class="bi bi-file-earmark-text text-warning me-2"></i>Certificates Management</h1>
+        <p class="page-header__sub text-muted small mb-0">Manage barangay clearances, indigency certificates, and document issuances.</p>
     </div>
-    <a asp-area="Staff" asp-controller="Certificates" asp-action="Create" class="btn btn-brand fw-semibold px-4">
-        <i class="bi bi-plus-lg me-1"></i> Issue New Certificate
-    </a>
+
+    <div class="d-flex gap-2">
+        <a href="/Staff/Certificates/Create" class="btn btn-warning text-dark shadow-sm fw-semibold rounded-3">
+            <i class="bi bi-plus-lg me-1"></i> Issue New Certificate
+        </a>
+    </div>
 </div>
 
 <div class="app-card app-card--pad">
     <div class="table-responsive">
         <table class="table table-hover align-middle mb-0">
             <thead class="table-light">
-                <tr class="text-uppercase text-secondary" style="font-size: 0.75rem; font-weight: 600;">
-                    <th>Control No.</th>
-                        <th>Resident Name</th>
-                        <th>Certificate Type</th>
-                        <th>Purpose</th>
-                        <th>Fee & Receipt</th>
-                        <th>Date Issued</th>
-                        <th>Status</th>
-                        <th class="text-end">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (Model != null && Model.Any())
-                    {
-                        foreach (var item in Model)
-                        {
-                            <tr>
-                                <td class="text-muted small fw-mono">
-                                    @(string.IsNullOrEmpty(item.ControlNumber) ? "N/A" : item.ControlNumber)
-                                </td>
-
-                                <td>
-                                    <div class="fw-semibold text-dark">
-                                        @item.ResidentName
-                                    </div>
-                                </td>
-
-                                <td>
-                                    <span class="badge bg-primary-subtle text-primary px-2 py-1">
-                                        @item.CertificateType
-                                    </span>
-                                </td>
-
-                                <td class="text-muted small">@item.Purpose</td>
-
-                                <td>
-                                    @if (item.FeePaid > 0)
-                                    {
-                                        <div class="d-flex flex-column align-items-start gap-1">
-                                            <span class="badge bg-success-subtle text-success fw-bold">
-                                                ₱@item.FeePaid.ToString("N2")
-                                            </span>
-                                            @if (!string.IsNullOrEmpty(item.PaymentReceiptPath))
-                                            {
-                                                <a href="@item.PaymentReceiptPath" target="_blank" class="small text-primary text-decoration-underline" style="font-size: 12px;">
-                                                    <i class="bi bi-file-earmark-image me-1"></i>View Receipt
-                                                </a>
-                                            }
-                                            else
-                                            {
-                                                <span class="text-muted" style="font-size: 11px; font-style: italic;">No Receipt</span>
-                                            }
-                                        </div>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge bg-light text-muted">FREE</span>
-                                    }
-                                </td>
-
-                                <td>
-                                    @(item.DateIssued.HasValue ? item.DateIssued.Value.ToString("MM/dd/yyyy") : "Pending")
-                                </td>
-
-                                <td>
-                                    @if (item.Status == "Success")
-                                    {
-                                        <span class="badge bg-success px-2 py-1 rounded fw-semibold">
-                                            <i class="bi bi-check-circle-fill me-1"></i>Success
-                                        </span>
-                                    }
-                                    else if (item.Status == "Ready for Pickup")
-                                    {
-                                        <span class="badge bg-info-subtle text-info-emphasis px-2 py-1 rounded fw-semibold">
-                                            <i class="bi bi-box-seam me-1"></i>Ready for Pickup
-                                        </span>
-                                    }
-                                    else if (item.Status == "Issued" || item.Status == "Approved")
-                                    {
-                                        <span class="badge bg-success-subtle text-success px-2 py-1 rounded fw-semibold">@item.Status</span>
-                                    }
-                                    else if (item.Status == "Rejected")
-                                    {
-                                        <span class="badge bg-danger-subtle text-danger px-2 py-1 rounded fw-semibold">@item.Status</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge bg-warning-subtle text-warning px-2 py-1 rounded fw-semibold">@item.Status</span>
-                                    }
-                                </td>
-
-                                <td class="text-end">
-                                    <div class="d-flex justify-content-end align-items-center gap-2">
-                                        <a asp-area="Staff" asp-controller="Certificates" asp-action="Details" asp-route-id="@item.CertificateId" class="btn btn-sm btn-outline-secondary px-3">
-                                            View Details
-                                        </a>
-
-                                        @if (item.Status == "Pending")
-                                        {
-                                            <form asp-area="Staff" asp-controller="Certificates" asp-action="Approve" asp-route-id="@item.CertificateId" method="post" class="m-0 p-0" onsubmit="return confirm('Sigurado ka bang nais mong aprobahan ang sertipikong ito?');">
-                                                @Html.AntiForgeryToken()
-                                                <button type="submit" class="btn btn-sm btn-primary px-3 fw-semibold">
-                                                    Approve
-                                                </button>
-                                            </form>
-                                        }
-
-                                        <a asp-area="Staff"
-                                           asp-controller="Certificates"
-                                           asp-action="Print"
-                                           asp-route-id="@item.CertificateId"
-                                           target="_blank"
-                                           class="btn btn-sm btn-success px-3 fw-semibold"
-                                           onclick="setTimeout(function(){ location.reload(); }, 1200);">
-                                            <i class="bi bi-printer-fill me-1"></i>Print
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                        }
-                    }
-                    else
+                <tr>
+                    <th>Document Type</th>
+                    <th>Resident Name</th>
+                    <th>Date Requested</th>
+                    <th>Fee & Receipt</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Any())
+                {
+                    @foreach (var item in Model)
                     {
                         <tr>
-                            <td colspan="8" class="text-center py-4 text-muted small">
-                                Walang nakitang talaan ng mga sertipiko.
+                            <td class="fw-semibold text-dark">@item.CertificateType</td>
+                            <td>@item.ResidentFullName</td>
+                            <td>@item.DateRequested.ToString("MM/dd/yyyy")</td>
+
+                            <td>
+                                @if (item.FeePaid > 0)
+                                {
+                                    <div class="d-flex flex-column align-items-start gap-1">
+                                        <span class="badge bg-success-subtle text-success fw-bold">
+                                            ₱@item.FeePaid.ToString("N2")
+                                        </span>
+                                        @if (!string.IsNullOrEmpty(item.PaymentReceiptPath))
+                                        {
+                                            <a href="@item.PaymentReceiptPath" target="_blank" class="small text-primary text-decoration-underline" style="font-size: 12px;">
+                                                <i class="bi bi-receipt me-1"></i>View Receipt
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted" style="font-size: 11px; font-style: italic;">No Receipt Uploaded</span>
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-light text-muted">FREE</span>
+                                }
+                            </td>
+
+                            <td>
+                                @if (item.Status == "Pending")
+                                {
+                                    <span class="badge bg-warning-subtle text-warning-emphasis">Pending</span>
+                                }
+                                else if (item.Status == "Success" || item.Status == "Issued" || item.Status == "Ready for Pickup")
+                                {
+                                    <span class="badge bg-success-subtle text-success-emphasis">@item.Status</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary-subtle text-secondary-emphasis">@item.Status</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                @if (item.Status == "Pending")
+                                {
+                                    <a href="/Staff/Certificates/Approve/@item.Id" class="btn btn-sm btn-outline-success me-1 fw-semibold">Approve</a>
+                                }
+
+                                <a href="/Staff/Certificates/Print/@item.Id"
+                                   target="_blank"
+                                   class="btn btn-sm btn-outline-primary me-1"
+                                   title="Print Certificate Document"
+                                   onclick="setTimeout(function(){ location.reload(); }, 1200);">
+                                    <i class="bi bi-printer"></i>
+                                </a>
+
+                                <a href="/Staff/Certificates/Details/@item.Id" class="btn btn-sm btn-outline-info me-1" title="View"><i class="bi bi-info-circle"></i></a>
+                                <a href="/Staff/Certificates/Delete/@item.Id" class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></a>
                             </td>
                         </tr>
                     }
-                </tbody>
-            </table>
-        </div>
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="6" class="text-center py-5 text-muted">
+                            <i class="bi bi-file-earmark display-6 d-block mb-2 opacity-50"></i>
+                            <span>No certificate requests found.</span>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
     </div>
+</div>

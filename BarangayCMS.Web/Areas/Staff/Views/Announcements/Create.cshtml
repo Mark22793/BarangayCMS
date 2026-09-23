@@ -1,36 +1,201 @@
-@model BarangayCMS.Areas.Staff.ViewModels.AnnouncementViewModel
+@model BarangayCMS.Web.Areas.Staff.ViewModels.AnnouncementViewModel
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
 @{
     Layout = "~/Areas/Staff/Views/Shared/_Layout.cshtml";
-    ViewData["Title"] = "Post Announcement";
+    ViewData["Title"] = "Create Announcement";
+
+    var categories = new[] { "General", "Health", "Advisory", "Holiday", "Event", "Emergency" };
 }
 
-<div class="page-header">
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h1 class="page-header__title"><i class="bi bi-megaphone-fill"></i> Create Announcement</h1>
-        <p class="page-header__sub">I-encode ang mga mahahalagang detalye para sa impormasyon ng publiko.</p>
+        <h1 class="page-header__title"><i class="bi bi-megaphone-fill me-2"></i>Post New Announcement</h1>
+        <p class="page-header__sub text-muted small mb-0">Fill out the fields below to publish a bulletin message to the community.</p>
     </div>
-    <a asp-action="Index" class="btn btn-light border fw-semibold rounded-3"><i class="bi bi-arrow-left me-1"></i> Bumalik</a>
+    <a href="/Staff/Announcements" class="btn btn-light border fw-semibold rounded-3"><i class="bi bi-arrow-left me-1"></i> Back to List</a>
 </div>
 
-<div class="form-page">
-    <form asp-action="Create" method="post">
-        @Html.AntiForgeryToken()
-        <div class="app-card app-card--pad">
-            <div class="mb-3">
-                <label asp-for="Title" class="form-label fw-semibold"></label>
-                <input asp-for="Title" class="form-control" placeholder="Isulat ang paksa..." />
-                <span asp-validation-for="Title" class="text-danger small"></span>
+<form asp-area="Staff" asp-controller="Announcements" asp-action="Create" method="post" enctype="multipart/form-data">
+    @Html.AntiForgeryToken()
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger border-0 rounded-3 small"></div>
+
+    <div class="row g-4">
+        <!-- LEFT: main content -->
+        <div class="col-lg-8">
+            <div class="app-card app-card--pad mb-4">
+                <h6 class="fw-bold text-uppercase text-muted small mb-3"><i class="bi bi-card-text me-1"></i> Bulletin Content</h6>
+
+                <div class="mb-3">
+                    <label asp-for="Title" class="form-label fw-semibold small">Announcement Title</label>
+                    <input asp-for="Title" class="form-control" placeholder="e.g., General Assembly Meeting" required />
+                    <span asp-validation-for="Title" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-1">
+                    <label asp-for="Content" class="form-label fw-semibold small">Content / Message Context</label>
+                    <textarea asp-for="Content" id="Content" class="form-control" rows="7" maxlength="4000" placeholder="Write the details of the announcement here..." required></textarea>
+                    <span asp-validation-for="Content" class="text-danger small"></span>
+                </div>
+                <div class="text-end"><small class="text-muted"><span id="charCount">0</span> / 4000 characters</small></div>
             </div>
-            <div class="mb-4">
-                <label asp-for="Content" class="form-label fw-semibold"></label>
-                <textarea asp-for="Content" class="form-control" rows="6" placeholder="Isulat ang buong nilalaman dito..."></textarea>
-                <span asp-validation-for="Content" class="text-danger small"></span>
-            </div>
-            <div class="d-flex justify-content-end gap-2 border-top pt-3 mt-4">
-                <a asp-action="Index" class="btn btn-light border px-4">Cancel</a>
-                <button type="submit" class="btn btn-brand px-4">Publish Content</button>
+
+            <div class="app-card app-card--pad">
+                <h6 class="fw-bold text-uppercase text-muted small mb-3"><i class="bi bi-calendar-range me-1"></i> Schedule</h6>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="DatePosted" class="form-label fw-semibold small">Publish Date</label>
+                        <input asp-for="DatePosted" type="datetime-local" class="form-control" value="@Model.DatePosted.ToString("yyyy-MM-ddTHH:mm")" required />
+                        <span asp-validation-for="DatePosted" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="ExpiryDate" class="form-label fw-semibold small">Expiration Date <span class="text-muted fw-normal">(Optional)</span></label>
+                        <input asp-for="ExpiryDate" type="datetime-local" class="form-control" />
+                        <small class="text-muted d-block mt-1">Kapag lumipas ang petsang ito, tatago na sa mga residente.</small>
+                    </div>
+                </div>
             </div>
         </div>
-    </form>
-</div>
+
+        <!-- RIGHT: classification + media -->
+        <div class="col-lg-4">
+            <div class="app-card app-card--pad mb-4">
+                <h6 class="fw-bold text-uppercase text-muted small mb-3"><i class="bi bi-tags-fill me-1"></i> Classification</h6>
+
+                <div class="mb-3">
+                    <label asp-for="Category" class="form-label fw-semibold small">Kategorya (Category)</label>
+                    <select asp-for="Category" class="form-select">
+                        @foreach (var c in categories)
+                        {
+                            <option value="@c">@c</option>
+                        }
+                    </select>
+                    <small class="text-muted">Kinokoloran nito ang badge sa public page.</small>
+                </div>
+
+                <div class="form-check form-switch">
+                    <input asp-for="IsPinned" class="form-check-input" type="checkbox" role="switch" id="pinToggle" />
+                    <label class="form-check-label fw-semibold small" for="pinToggle">
+                        <i class="bi bi-pin-angle-fill text-success me-1"></i>I-pin bilang mahalaga
+                    </label>
+                    <div class="text-muted small">Ipapakita muna sa taas ng listahan.</div>
+                </div>
+            </div>
+
+            <div class="app-card app-card--pad">
+                <h6 class="fw-bold text-uppercase text-muted small mb-3"><i class="bi bi-image me-1"></i> Featured Image</h6>
+
+                <div class="mb-2">
+                    <label asp-for="ImageFile" class="form-label fw-semibold small">Upload Image</label>
+                    <input asp-for="ImageFile" id="ImageFile" class="form-control" type="file" accept="image/png,image/jpeg,image/webp" />
+                    <span asp-validation-for="ImageFile" class="text-danger small"></span>
+                    <small class="text-muted d-block mt-1">Awtomatikong ia-upload pagkapili. Max 5 MB (.jpg, .png, .webp).</small>
+                    <div id="uploadStatus" class="small mt-1"></div>
+                </div>
+
+                <div class="mb-2">
+                    <label asp-for="ImageUrl" class="form-label fw-semibold small">Image URL <span class="text-muted fw-normal">(auto-filled)</span></label>
+                    <input asp-for="ImageUrl" id="ImageUrl" class="form-control" placeholder="Awtomatikong mapupunan pagkatapos mag-upload…" readonly />
+                    <span asp-validation-for="ImageUrl" class="text-danger small"></span>
+                </div>
+
+                <div class="rounded-3 overflow-hidden border text-center" style="background: var(--surface-alt, #f8f9fa); min-height: 120px; display:flex; align-items:center; justify-content:center;">
+                    <img id="imgPreview" src="" alt="Preview" style="display:none; width:100%; max-height:180px; object-fit:cover;" />
+                    <span id="imgPlaceholder" class="text-muted small"><i class="bi bi-card-image d-block fs-3 mb-1 opacity-50"></i>Walang preview</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2 border-top pt-4 mt-4">
+        <a href="/Staff/Announcements" class="btn btn-light border px-4 fw-semibold rounded-3">Cancel</a>
+        <button type="submit" class="btn btn-warning text-dark fw-semibold px-4 rounded-3">
+            <i class="bi bi-send-fill me-1"></i> Publish Announcement
+        </button>
+    </div>
+</form>
+
+@section Scripts {
+    <script>
+        (function () {
+            var content = document.getElementById('Content');
+            var count = document.getElementById('charCount');
+            function upd() { count.textContent = (content.value || '').length; }
+            content && content.addEventListener('input', upd); upd();
+
+            var url = document.getElementById('ImageUrl');
+            var file = document.getElementById('ImageFile');
+            var img = document.getElementById('imgPreview');
+            var ph = document.getElementById('imgPlaceholder');
+            var status = document.getElementById('uploadStatus');
+            var submitBtn = document.querySelector('form button[type="submit"]');
+
+            var MAX_BYTES = 5 * 1024 * 1024;
+            var ALLOWED = ['image/jpeg', 'image/png', 'image/webp'];
+
+            function show(src) {
+                if (!src) { img.style.display = 'none'; ph.style.display = ''; return; }
+                img.onload = function () { img.style.display = ''; ph.style.display = 'none'; };
+                img.onerror = function () { img.style.display = 'none'; ph.style.display = ''; };
+                img.src = src;
+            }
+            function setStatus(msg, kind) {
+                status.textContent = msg || '';
+                status.className = 'small mt-1 ' + (kind === 'error' ? 'text-danger' : kind === 'ok' ? 'text-success' : 'text-muted');
+            }
+            function token() {
+                var t = document.querySelector('input[name="__RequestVerificationToken"]');
+                return t ? t.value : '';
+            }
+
+            file && file.addEventListener('change', function () {
+                if (!(file.files && file.files[0])) { return; }
+                var f = file.files[0];
+
+                if (ALLOWED.indexOf(f.type) === -1) {
+                    setStatus('Pinapayagan lamang ang JPG, PNG, o WEBP.', 'error');
+                    file.value = ''; return;
+                }
+                if (f.size > MAX_BYTES) {
+                    setStatus('Ang larawan ay hindi dapat lumagpas sa 5 MB.', 'error');
+                    file.value = ''; return;
+                }
+
+                var reader = new FileReader();
+                reader.onload = function (e) { show(e.target.result); };
+                reader.readAsDataURL(f);
+
+                var fd = new FormData();
+                fd.append('file', f);
+                fd.append('__RequestVerificationToken', token());
+
+                setStatus('Ina-upload ang larawan…', 'muted');
+                if (submitBtn) submitBtn.disabled = true;
+
+                fetch('/Staff/Announcements/UploadImage', { method: 'POST', body: fd, headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        if (data && data.success && data.url) {
+                            url.value = data.url;
+                            show(data.url);
+                            setStatus('✅ Na-upload. I-click ang Publish para i-save.', 'ok');
+                        } else {
+                            url.value = '';
+                            setStatus((data && data.error) || 'Nabigo ang pag-upload.', 'error');
+                            file.value = '';
+                            show('');
+                        }
+                    })
+                    .catch(function () {
+                        url.value = '';
+                        setStatus('Nabigo ang pag-upload. Subukan muli.', 'error');
+                        file.value = '';
+                        show('');
+                    })
+                    .finally(function () { if (submitBtn) submitBtn.disabled = false; });
+            });
+
+            if ((url.value || '').trim()) show(url.value.trim());
+        })();
+    </script>
+}

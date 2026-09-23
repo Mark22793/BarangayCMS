@@ -1,56 +1,75 @@
-@model BarangayCMS.Areas.Staff.ViewModels.ComplaintViewModel
+@model BarangayCMS.Web.Areas.Staff.ViewModels.ComplaintViewModel
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
 @{
     Layout = "~/Areas/Staff/Views/Shared/_Layout.cshtml";
-    ViewData["Title"] = "New Incident Intake Form";
+    ViewData["Title"] = "File Complaint";
 }
 
-<div class="page-header">
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h1 class="page-header__title"><i class="bi bi-file-earmark-medical"></i> New Incident Intake Form</h1>
-        <p class="page-header__sub">I-rekord ang pormal na reklamo mula sa isang residente ng barangay.</p>
+        <h1 class="page-header__title"><i class="bi bi-file-earmark-medical text-warning me-2"></i> Barangay Blotter Entry Form</h1>
+        <p class="page-header__sub text-muted small mb-0">Record a new incident blotter or legal citizen complaint.</p>
     </div>
-    <a asp-area="Staff" asp-controller="Complaints" asp-action="Index" class="btn btn-light border fw-semibold rounded-3"><i class="bi bi-arrow-left me-1"></i> Bumalik</a>
+    <a asp-area="Staff" asp-controller="Complaints" asp-action="Index" class="btn btn-light border fw-semibold rounded-3"><i class="bi bi-arrow-left me-1"></i> Back</a>
 </div>
 
 <div class="form-page">
     <form asp-area="Staff" asp-controller="Complaints" asp-action="Create" method="post">
         @Html.AntiForgeryToken()
-        <div class="app-card app-card--pad">
+        <div class="app-card app-card--pad" style="max-width: 800px; margin: 0 auto;">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3 small fw-bold"></div>
 
-            <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
-
-            <!-- Complainant Dropdown Field -->
+            <!-- Complainant Dropdown -->
             <div class="mb-3">
-                <label asp-for="ResidentId" class="form-label fw-semibold">Complainant Name</label>
-                <select asp-for="ResidentId" asp-items="ViewBag.ResidentsList" class="form-select">
-                    <option value="">-- Pumili ng Residente --</option>
+                <label asp-for="ResidentId" class="form-label fw-bold small text-secondary">Select Complainant (Resident)</label>
+                <select asp-for="ResidentId" asp-items="Model.ResidentList" class="form-select">
+                    <option value="">-- Choose Resident from Database --</option>
                 </select>
                 <span asp-validation-for="ResidentId" class="text-danger small"></span>
             </div>
 
-            <!-- Subject Field -->
+            <!-- Subject Input -->
             <div class="mb-3">
-                <label asp-for="Subject" class="form-label fw-semibold">Case Subject / Nature of Complaint</label>
-                <input asp-for="Subject" class="form-control" placeholder="e.g., Land Dispute, Public Disturbance" />
+                <label asp-for="Subject" class="form-label fw-bold small text-secondary">Nature of Incident / Subject</label>
+                <input asp-for="Subject" class="form-control" placeholder="e.g., Noise Complaint, Boundary Dispute, Physical Altercation" />
                 <span asp-validation-for="Subject" class="text-danger small"></span>
             </div>
 
-            <!-- Description Field -->
-            <div class="mb-4">
-                <label asp-for="Description" class="form-label fw-semibold">Detailed Incident Narrative</label>
-                <textarea asp-for="Description" rows="5" class="form-control" placeholder="Isulat ang kronolohikal na detalye ng pangyayari..."></textarea>
+            <!-- Narrative Details -->
+            <div class="mb-3">
+                <label asp-for="Description" class="form-label fw-bold small text-secondary">Narrative & Incident Details</label>
+                <textarea asp-for="Description" class="form-control" rows="5" placeholder="Write down structural specifics, names of witnesses, and statements..."></textarea>
                 <span asp-validation-for="Description" class="text-danger small"></span>
             </div>
 
-            <!-- Hidden Status Default for New Logs -->
-            <input type="hidden" asp-for="Status" value="Pending" />
+            <!-- Date and Status Row -->
+            <div class="row g-3">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="DateSubmitted" class="form-label fw-bold small text-secondary">Date of Logging</label>
+                    <input asp-for="DateSubmitted" class="form-control" type="datetime-local" />
+                    <span asp-validation-for="DateSubmitted" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="Status" class="form-label fw-bold small text-secondary">Initial Entry Status</label>
+                    <select asp-for="Status" class="form-select">
+                        <option value="Pending">Pending Audit</option>
+                        <option value="Assigned">Assigned to Mediation</option>
+                        <option value="Resolved">Closed / Resolved</option>
+                    </select>
+                    <span asp-validation-for="Status" class="text-danger small"></span>
+                </div>
+            </div>
 
-            <!-- Action Control Buttons -->
+            <!-- Buttons -->
             <div class="d-flex justify-content-end gap-2 border-top pt-3 mt-4">
-                <a asp-area="Staff" asp-controller="Complaints" asp-action="Index" class="btn btn-light border px-4">Cancel</a>
-                <button type="submit" class="btn btn-brand px-4">Log Complaint</button>
+                <a asp-area="Staff" asp-controller="Complaints" asp-action="Index" class="btn btn-light border px-4 rounded-3 fw-semibold">Cancel</a>
+                <button type="submit" class="btn btn-warning text-dark px-4 fw-semibold rounded-3"><i class="bi bi-save me-1"></i> Save Record</button>
             </div>
         </div>
     </form>
 </div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

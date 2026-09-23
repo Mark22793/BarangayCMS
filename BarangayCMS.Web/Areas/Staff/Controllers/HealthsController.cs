@@ -1,14 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using BarangayCMS.Areas.Staff.ViewModels;
-using BarangayCMS.DAL.Context;
-using BarangayCMS.Entities;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using BarangayCMS.DAL.Context;
+using BarangayCMS.Entities;
+using BarangayCMS.Web.Areas.Staff.ViewModels; // Inupdate sa Staff Models namespace
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 
-namespace BarangayCMS.Areas.Staff.Controllers
+namespace BarangayCMS.Web.Areas.Staff.Controllers
 {
     [Area("Staff")]
     public class HealthController : Controller
@@ -20,210 +20,274 @@ namespace BarangayCMS.Areas.Staff.Controllers
             _context = context;
         }
 
-        // GET: /Staff/Health
-        public IActionResult Index()
+        // 1. GET: Staff/Health
+        public async Task<IActionResult> Index()
         {
-            var list = _context.HealthRecords
-                .Include(h => h.Resident)
-                .Select(h => new HealthViewModel
-                {
-                    Id = h.HealthRecordId, // Ito ang itinatawag ng asp-route-id="@item.Id" sa view mo
-                    HealthRecordId = h.HealthRecordId,
-                    ResidentId = h.ResidentId,
-                    ResidentName = h.Resident != null
-                        ? (h.Resident.FirstName + " " + (string.IsNullOrEmpty(h.Resident.MiddleName) ? "" : h.Resident.MiddleName + " ") + h.Resident.LastName + " " + h.Resident.Suffix).Trim()
-                        : "Unknown Patient",
-                    BloodType = h.BloodType,
-                    HealthClassification = h.HealthClassification,
-                    MedicalCondition = h.MedicalCondition,
-                    IsVaccinated = h.IsVaccinated,
-                    WeightKg = h.WeightKg,
-                    HeightCm = h.HeightCm,
-                    LastCheckupDate = h.LastCheckupDate,
-                    AttendingHealthWorker = h.AttendingHealthWorker,
-                    Remarks = h.Remarks,
-                    DateRecorded = h.DateLogged
-                })
-                .OrderByDescending(h => h.LastCheckupDate)
-                .ToList();
-
-            return View(list);
-        }
-
-        // 🛠️ BINAGO: Ginawang 'ViewRecord' mula sa 'Details' para tugma sa View History button mo!
-        // GET: /Staff/Health/ViewRecord/5
-        public IActionResult ViewRecord(int id)
-        {
-            var item = _context.HealthRecords
-                .Include(h => h.Resident)
-                .Where(h => h.HealthRecordId == id)
+            var records = await _context.Set<HealthRecord>()
+                .OrderByDescending(h => h.DateLogged)
                 .Select(h => new HealthViewModel
                 {
                     Id = h.HealthRecordId,
-                    HealthRecordId = h.HealthRecordId,
                     ResidentId = h.ResidentId,
-                    ResidentName = h.Resident != null
-                        ? (h.Resident.FirstName + " " + (string.IsNullOrEmpty(h.Resident.MiddleName) ? "" : h.Resident.MiddleName + " ") + h.Resident.LastName + " " + h.Resident.Suffix).Trim()
-                        : "Unknown Patient",
-                    BloodType = h.BloodType,
-                    HealthClassification = h.HealthClassification,
-                    MedicalCondition = h.MedicalCondition,
-                    IsVaccinated = h.IsVaccinated,
                     WeightKg = h.WeightKg,
                     HeightCm = h.HeightCm,
-                    LastCheckupDate = h.LastCheckupDate,
+                    BloodType = h.BloodType,
+                    HealthClassification = h.HealthClassification,
+                    IsVaccinated = h.IsVaccinated,
+                    MedicalCondition = h.MedicalCondition,
                     AttendingHealthWorker = h.AttendingHealthWorker,
                     Remarks = h.Remarks,
-                    DateRecorded = h.DateLogged
-                })
-                .FirstOrDefault();
+                    LastCheckupDate = h.LastCheckupDate,
+                    DateRecorded = h.DateLogged,
 
-            if (item == null) return NotFound();
-            return View(item); // ⚠️ Tandaan: Dapat may View ka ring may pangalang 'ViewRecord.cshtml' sa folder mo.
+                    ResidentName = _context.Residents
+                        .Where(r => r.ResidentId == h.ResidentId)
+                        .Select(r => r.LastName + ", " + r.FirstName + (string.IsNullOrEmpty(r.MiddleName) ? "" : " " + r.MiddleName))
+                        .FirstOrDefault() ?? "Unknown Resident"
+                }).ToListAsync();
+
+            return View(records);
         }
 
-        // GET: /Staff/Health/Create
-        public IActionResult Create()
+        // 2. GET: Staff/Health/Details/5
+        public async Task<IActionResult> Details(int? id)
         {
-            var viewModel = new HealthViewModel
+            if (id == null) return NotFound();
+
+            var record = await _context.Set<HealthRecord>()
+                .FirstOrDefaultAsync(h => h.HealthRecordId == id);
+
+            if (record == null) return NotFound();
+
+            var model = new HealthViewModel
             {
-                ResidentDataSource = GetResidentDropdownList()
+                Id = record.HealthRecordId,
+                ResidentId = record.ResidentId,
+                WeightKg = record.WeightKg,
+                HeightCm = record.HeightCm,
+                BloodType = record.BloodType,
+                HealthClassification = record.HealthClassification,
+                IsVaccinated = record.IsVaccinated,
+                MedicalCondition = record.MedicalCondition,
+                AttendingHealthWorker = record.AttendingHealthWorker,
+                Remarks = record.Remarks,
+                LastCheckupDate = record.LastCheckupDate,
+                DateRecorded = record.DateLogged,
+                ResidentName = _context.Residents
+                    .Where(r => r.ResidentId == record.ResidentId)
+                    .Select(r => r.LastName + ", " + r.FirstName + (string.IsNullOrEmpty(r.MiddleName) ? "" : " " + r.MiddleName))
+                    .FirstOrDefault() ?? "Unknown Resident"
             };
-            return View(viewModel);
+
+            return View(model);
         }
 
-        // POST: /Staff/Health/Create
+        // 3. GET: Staff/Health/Create
+        public async Task<IActionResult> Create()
+        {
+            var residents = await _context.Residents
+                .Where(r => r.IsResident)
+                .OrderBy(r => r.LastName)
+                .Select(r => new
+                {
+                    Id = r.ResidentId,
+                    FullName = r.LastName + ", " + r.FirstName + (string.IsNullOrEmpty(r.MiddleName) ? "" : " " + r.MiddleName.Substring(0, 1) + ".")
+                })
+                .ToListAsync();
+
+            ViewBag.Residents = new SelectList(residents, "Id", "FullName");
+
+            return View(new HealthViewModel { DateRecorded = DateTime.Now });
+        }
+
+        // 4. POST: Staff/Health/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Create(HealthViewModel model)
+        public async Task<IActionResult> Create(HealthViewModel model)
         {
             if (ModelState.IsValid)
             {
-                var newRecord = new HealthRecord
+                var healthRecord = new HealthRecord
                 {
                     ResidentId = model.ResidentId,
                     MedicalCondition = model.MedicalCondition,
+                    WeightKg = model.WeightKg,
+                    HeightCm = model.HeightCm,
                     BloodType = string.IsNullOrWhiteSpace(model.BloodType) ? "N/A" : model.BloodType,
                     HealthClassification = string.IsNullOrWhiteSpace(model.HealthClassification) ? "General" : model.HealthClassification,
                     IsVaccinated = model.IsVaccinated,
-                    LastCheckupDate = model.LastCheckupDate,
-                    AttendingHealthWorker = string.IsNullOrWhiteSpace(model.AttendingHealthWorker) ? "Duty Nurse" : model.AttendingHealthWorker,
+                    AttendingHealthWorker = string.IsNullOrWhiteSpace(model.AttendingHealthWorker) ? "Barangay Health Worker" : model.AttendingHealthWorker,
                     Remarks = model.Remarks ?? string.Empty,
-                    DateLogged = DateTime.Now,
-                    WeightKg = model.WeightKg,
-                    HeightCm = model.HeightCm
+                    DateLogged = model.DateRecorded,
+                    LastCheckupDate = model.LastCheckupDate == default ? model.DateRecorded : model.LastCheckupDate
                 };
 
-                _context.HealthRecords.Add(newRecord);
-                _context.SaveChanges();
+                _context.Add(healthRecord);
+                await _context.SaveChangesAsync();
+
                 return RedirectToAction(nameof(Index));
             }
 
-            model.ResidentDataSource = GetResidentDropdownList();
+            var residentsList = await _context.Residents
+                .Where(r => r.IsResident)
+                .OrderBy(r => r.LastName)
+                .Select(r => new
+                {
+                    Id = r.ResidentId,
+                    FullName = r.LastName + ", " + r.FirstName
+                })
+                .ToListAsync();
+
+            ViewBag.Residents = new SelectList(residentsList, "Id", "FullName");
+
             return View(model);
         }
 
-        // GET: /Staff/Health/Edit/5
-        public IActionResult Edit(int id)
+        // 5. GET: Staff/Health/Edit/5
+        public async Task<IActionResult> Edit(int? id)
         {
-            var item = _context.HealthRecords.FirstOrDefault(h => h.HealthRecordId == id);
-            if (item == null) return NotFound();
+            if (id == null) return NotFound();
 
-            var viewModel = new HealthViewModel
+            var record = await _context.Set<HealthRecord>()
+                .FirstOrDefaultAsync(h => h.HealthRecordId == id);
+
+            if (record == null) return NotFound();
+
+            var model = new HealthViewModel
             {
-                Id = item.HealthRecordId,
-                HealthRecordId = item.HealthRecordId,
-                ResidentId = item.ResidentId,
-                MedicalCondition = item.MedicalCondition,
-                WeightKg = item.WeightKg,
-                HeightCm = item.HeightCm,
-                BloodType = item.BloodType,
-                HealthClassification = item.HealthClassification,
-                IsVaccinated = item.IsVaccinated,
-                LastCheckupDate = item.LastCheckupDate,
-                AttendingHealthWorker = item.AttendingHealthWorker,
-                Remarks = item.Remarks,
-                DateRecorded = item.DateLogged,
-                ResidentDataSource = GetResidentDropdownList()
+                Id = record.HealthRecordId,
+                ResidentId = record.ResidentId,
+                WeightKg = record.WeightKg,
+                HeightCm = record.HeightCm,
+                BloodType = record.BloodType,
+                HealthClassification = record.HealthClassification,
+                IsVaccinated = record.IsVaccinated,
+                MedicalCondition = record.MedicalCondition,
+                AttendingHealthWorker = record.AttendingHealthWorker,
+                Remarks = record.Remarks,
+                LastCheckupDate = record.LastCheckupDate,
+                DateRecorded = record.DateLogged
             };
 
-            return View(viewModel);
-        }
+            var residents = await _context.Residents
+                .Where(r => r.IsResident)
+                .OrderBy(r => r.LastName)
+                .Select(r => new
+                {
+                    Id = r.ResidentId,
+                    FullName = r.LastName + ", " + r.FirstName + (string.IsNullOrEmpty(r.MiddleName) ? "" : " " + r.MiddleName.Substring(0, 1) + ".")
+                })
+                .ToListAsync();
 
-        // POST: /Staff/Health/Edit/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult Edit(int id, HealthViewModel model)
-        {
-            if (ModelState.IsValid)
-            {
-                var existing = _context.HealthRecords.FirstOrDefault(h => h.HealthRecordId == id);
-                if (existing == null) return NotFound();
+            ViewBag.Residents = new SelectList(residents, "Id", "FullName", model.ResidentId);
 
-                existing.ResidentId = model.ResidentId;
-                existing.MedicalCondition = model.MedicalCondition;
-                existing.WeightKg = model.WeightKg;
-                existing.HeightCm = model.HeightCm;
-                existing.BloodType = string.IsNullOrWhiteSpace(model.BloodType) ? "N/A" : model.BloodType;
-                existing.HealthClassification = string.IsNullOrWhiteSpace(model.HealthClassification) ? "General" : model.HealthClassification;
-                existing.IsVaccinated = model.IsVaccinated;
-                existing.LastCheckupDate = model.LastCheckupDate;
-                existing.AttendingHealthWorker = string.IsNullOrWhiteSpace(model.AttendingHealthWorker) ? "Duty Nurse" : model.AttendingHealthWorker;
-                existing.Remarks = model.Remarks ?? string.Empty;
-
-                _context.SaveChanges();
-                return RedirectToAction(nameof(Index));
-            }
-
-            model.ResidentDataSource = GetResidentDropdownList();
             return View(model);
         }
 
-        // GET: /Staff/Health/Delete/5
-        public IActionResult Delete(int id)
+        // 6. POST: Staff/Health/Edit/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, HealthViewModel model)
         {
-            var item = _context.HealthRecords
-                .Include(h => h.Resident)
-                .Where(h => h.HealthRecordId == id)
-                .Select(h => new HealthViewModel
-                {
-                    Id = h.HealthRecordId,
-                    HealthRecordId = h.HealthRecordId,
-                    MedicalCondition = h.MedicalCondition,
-                    ResidentName = h.Resident != null
-                        ? (h.Resident.FirstName + " " + h.Resident.LastName)
-                        : "Unknown Patient"
-                })
-                .FirstOrDefault();
+            if (id != model.Id) return NotFound();
 
-            if (item == null) return NotFound();
-            return View(item);
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    var recordToUpdate = await _context.Set<HealthRecord>()
+                        .FirstOrDefaultAsync(h => h.HealthRecordId == id);
+
+                    if (recordToUpdate == null) return NotFound();
+
+                    recordToUpdate.ResidentId = model.ResidentId;
+                    recordToUpdate.MedicalCondition = model.MedicalCondition;
+                    recordToUpdate.WeightKg = model.WeightKg;
+                    recordToUpdate.HeightCm = model.HeightCm;
+                    recordToUpdate.BloodType = string.IsNullOrWhiteSpace(model.BloodType) ? "N/A" : model.BloodType;
+                    recordToUpdate.HealthClassification = string.IsNullOrWhiteSpace(model.HealthClassification) ? "General" : model.HealthClassification;
+                    recordToUpdate.IsVaccinated = model.IsVaccinated;
+                    recordToUpdate.AttendingHealthWorker = string.IsNullOrWhiteSpace(model.AttendingHealthWorker) ? "Barangay Health Worker" : model.AttendingHealthWorker;
+                    recordToUpdate.Remarks = model.Remarks ?? string.Empty;
+                    recordToUpdate.DateLogged = model.DateRecorded;
+                    recordToUpdate.LastCheckupDate = model.LastCheckupDate == default ? model.DateRecorded : model.LastCheckupDate;
+
+                    _context.Update(recordToUpdate);
+                    await _context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!_context.Set<HealthRecord>().Any(e => e.HealthRecordId == model.Id))
+                    {
+                        return NotFound();
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+                return RedirectToAction(nameof(Index));
+            }
+
+            var residentsList = await _context.Residents
+                .Where(r => r.IsResident)
+                .OrderBy(r => r.LastName)
+                .Select(r => new { Id = r.ResidentId, FullName = r.LastName + ", " + r.FirstName })
+                .ToListAsync();
+
+            ViewBag.Residents = new SelectList(residentsList, "Id", "FullName", model.ResidentId);
+
+            return View(model);
         }
 
-        // POST: /Staff/Health/Delete/5
+        // 7. GET: Staff/Health/Delete/5
+        public async Task<IActionResult> Delete(int? id)
+        {
+            if (id == null) return NotFound();
+
+            var record = await _context.Set<HealthRecord>()
+                .FirstOrDefaultAsync(h => h.HealthRecordId == id);
+
+            if (record == null) return NotFound();
+
+            var model = new HealthViewModel
+            {
+                Id = record.HealthRecordId,
+                ResidentId = record.ResidentId,
+                WeightKg = record.WeightKg,
+                HeightCm = record.HeightCm,
+                BloodType = record.BloodType,
+                HealthClassification = record.HealthClassification,
+                IsVaccinated = record.IsVaccinated,
+                MedicalCondition = record.MedicalCondition,
+                AttendingHealthWorker = record.AttendingHealthWorker,
+                Remarks = record.Remarks,
+                LastCheckupDate = record.LastCheckupDate,
+                DateRecorded = record.DateLogged,
+                ResidentName = _context.Residents
+                    .Where(r => r.ResidentId == record.ResidentId)
+                    .Select(r => r.LastName + ", " + r.FirstName)
+                    .FirstOrDefault() ?? "Unknown Resident"
+            };
+
+            return View(model);
+        }
+
+        // 8. POST: Staff/Health/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public IActionResult DeleteConfirmed(int id)
+        public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var item = _context.HealthRecords.FirstOrDefault(h => h.HealthRecordId == id);
-            if (item != null)
-            {
-                _context.HealthRecords.Remove(item);
-                _context.SaveChanges();
-            }
-            return RedirectToAction(nameof(Index));
-        }
+            var record = await _context.Set<HealthRecord>()
+                .FirstOrDefaultAsync(h => h.HealthRecordId == id);
 
-        private List<SelectListItem> GetResidentDropdownList()
-        {
-            return _context.Residents
-                .Where(r => r.IsResident)
-                .Select(r => new SelectListItem
-                {
-                    Value = r.ResidentId.ToString(),
-                    Text = (r.FirstName + " " + (string.IsNullOrEmpty(r.MiddleName) ? "" : r.MiddleName + " ") + r.LastName + " " + r.Suffix).Trim()
-                })
-                .ToList();
+            if (record != null)
+            {
+                _context.Set<HealthRecord>().Remove(record);
+                await _context.SaveChangesAsync();
+            }
+
+            return RedirectToAction(nameof(Index));
         }
     }
 }

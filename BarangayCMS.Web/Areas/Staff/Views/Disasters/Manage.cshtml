@@ -1,6 +1,6 @@
 ﻿@model BarangayCMS.Areas.Staff.ViewModels.DisasterViewModel
 @{
-    // Ikinabit sa layout para may kasamang sidebar sa kaliwa gaya ng Create at Index!
+    // Ikinabit sa Staff layout para siguradong sa Staff Sidebar at Navbar ito papasok
     Layout = "~/Areas/Staff/Views/Shared/_Layout.cshtml";
     ViewData["Title"] = "Manage Incident Operation";
 }
@@ -31,8 +31,13 @@
         <p class="text-secondary p-3 border rounded bg-white" style="white-space: pre-line; line-height: 1.6; min-height: 120px;">@Model.Description</p>
     </div>
 
+    <!-- 📌 FIXED: Idinagdag ang asp-area at asp-controller sa mga button links -->
     <div class="d-flex justify-content-between mt-4">
-        <a asp-action="Index" class="btn btn-sm btn-outline-secondary px-3"><i class="bi bi-arrow-left"></i> Operations Back</a>
-        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-primary px-4"><i class="bi bi-pencil"></i> Modify Operations Log</a>
+        <a asp-area="Staff" asp-controller="Disasters" asp-action="Index" class="btn btn-sm btn-outline-secondary px-3">
+            <i class="bi bi-arrow-left"></i> Operations Back
+        </a>
+        <a asp-area="Staff" asp-controller="Disasters" asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-primary px-4">
+            <i class="bi bi-pencil"></i> Modify Operations Log
+        </a>
     </div>
 </div>

@@ -1,52 +1,78 @@
-﻿@model BarangayCMS.Areas.Staff.ViewModels.ComplaintViewModel
-@{
-    Layout = null;
-}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8" />
-    <title>Edit Complaint Log</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
-</head>
-<body class="bg-light">
-    <div class="container py-5" style="max-width: 650px;">
-        <div class="card border-0 shadow-sm p-4 rounded-3">
-            <h5 class="fw-bold text-dark mb-1">Update Complaint & Status</h5>
-            <p class="text-muted small mb-4">Baguhin ang mga detalye o i-update ang estado ng pagdinig/blotter.</p>
+﻿@model BarangayCMS.Web.Areas.Staff.ViewModels.ComplaintViewModel
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 
-            <form asp-action="Edit" method="post">
-                @Html.AntiForgeryToken()
-                <input type="hidden" asp-for="ComplaintId" />
-                <input type="hidden" asp-for="ResidentId" />
-                <div class="mb-3">
-                    <label class="form-label small fw-bold text-muted">Complainant</label>
-                    <input class="form-control form-control-sm bg-light" value="@Model.ResidentName" readonly />
-                </div>
-                <div class="mb-3">
-                    <label asp-for="Subject" class="form-label small fw-bold text-secondary"></label>
-                    <input asp-for="Subject" class="form-control form-control-sm" />
-                    <span asp-validation-for="Subject" class="text-danger small"></span>
-                </div>
-                <div class="mb-3">
-                    <label asp-for="Description" class="form-label small fw-bold text-secondary"></label>
-                    <textarea asp-for="Description" class="form-control form-control-sm" rows="5"></textarea>
-                    <span asp-validation-for="Description" class="text-danger small"></span>
-                </div>
-                <div class="mb-4">
-                    <label asp-for="Status" class="form-label small fw-bold text-secondary">Blotter Case Status</label>
-                    <select asp-for="Status" class="form-select form-select-sm">
-                        <option value="Pending">Pending (Bago / Hindi pa Naaksyunan)</option>
-                        <option value="Ongoing">Ongoing (Kasalukuyang Dinidinig)</option>
-                        <option value="Resolved">Resolved (Naayos / Sarado na)</option>
+@{
+    Layout = "~/Areas/Staff/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Modify Logged Complaint Records";
+}
+
+<div class="container py-4" style="max-width: 650px;">
+    <div class="app-card app-card--pad">
+        <h4 class="mb-3 fw-bold text-dark"><i class="bi bi-pencil-square text-warning me-2"></i>Modify Logged Complaint Records</h4>
+        <p class="text-muted small mb-4">Update dispute descriptions, case subject, or tracking status.</p>
+
+        <form asp-area="Staff" asp-controller="Complaints" asp-action="Edit" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Id" />
+
+            <!-- Complainant Name Section -->
+            <div class="mb-3">
+                <label class="form-label fw-bold small text-secondary">Complainant Name Reference</label>
+
+                @if (Model.Subject != null && Model.Subject.StartsWith("CMP"))
+                {
+                    <div class="alert alert-info py-2 px-3 mb-2 rounded border small">
+                        <i class="bi bi-person-fill me-2 text-primary"></i>Submitted Online By: <strong>@Model.ResidentFullName</strong>
+                    </div>
+                    <input type="hidden" asp-for="ResidentId" />
+                }
+                else
+                {
+                    <select asp-for="ResidentId" asp-items="Model.ResidentList" class="form-select">
+                        <option value="">-- Select Complainant --</option>
                     </select>
+                    <span asp-validation-for="ResidentId" class="text-danger small"></span>
+                }
+            </div>
+
+            <!-- Subject -->
+            <div class="mb-3">
+                <label asp-for="Subject" class="form-label fw-bold small text-secondary">Subject / Case Matter</label>
+                <input asp-for="Subject" class="form-control" readonly="@(Model.Subject != null && Model.Subject.StartsWith("CMP"))" />
+                <span asp-validation-for="Subject" class="text-danger small"></span>
+            </div>
+
+            <!-- Description -->
+            <div class="mb-3">
+                <label asp-for="Description" class="form-label fw-bold small text-secondary">Narrative & Case Details</label>
+                <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+                <span asp-validation-for="Description" class="text-danger small"></span>
+            </div>
+
+            <!-- Dates & Status -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <label asp-for="DateSubmitted" class="form-label fw-bold small text-secondary">Incident / Logged Date</label>
+                    <input asp-for="DateSubmitted" class="form-control" type="date" />
+                    <span asp-validation-for="DateSubmitted" class="text-danger small"></span>
                 </div>
-                <div class="d-flex justify-content-end gap-2">
-                    <a asp-action="Index" class="btn btn-sm btn-light border px-3">Discard</a>
-                    <button type="submit" class="btn btn-sm btn-primary px-4">Save Updates</button>
+                <div class="col-md-6">
+                    <label asp-for="Status" class="form-label fw-bold small text-secondary">Case Tracking Status</label>
+                    <select asp-for="Status" class="form-select">
+                        <option value="Pending">Pending</option>
+                        <option value="Assigned">Assigned</option>
+                        <option value="Investigation">Investigation</option>
+                        <option value="Resolved">Resolved</option>
+                        <option value="Dismissed">Dismissed</option>
+                    </select>
+                    <span asp-validation-for="Status" class="text-danger small"></span>
                 </div>
-            </form>
-        </div>
+            </div>
+
+            <div class="d-flex justify-content-between border-top pt-3">
+                <a asp-area="Staff" asp-controller="Complaints" asp-action="Details" asp-route-id="@Model.Id" class="btn btn-light border px-4 fw-semibold rounded-3">Discard Changes</a>
+                <button type="submit" class="btn btn-warning text-dark fw-bold px-4 shadow-sm rounded-3"><i class="bi bi-check-lg me-1"></i> Update Case File</button>
+            </div>
+        </form>
     </div>
-</body>
-</html>
+</div>

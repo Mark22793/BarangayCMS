@@ -2,107 +2,91 @@
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 @{
     Layout = "~/Areas/Staff/Views/Shared/_Layout.cshtml";
-    ViewData["Title"] = "Issue New Certificate";
+    ViewData["Title"] = "New Request";
 }
 
-<div class="page-header">
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h1 class="page-header__title"><i class="bi bi-file-earmark-plus"></i> Issue New Certificate</h1>
-        <p class="page-header__sub">Mag-isyu o mag-record ng bagong sertipiko para sa residente.</p>
+        <h1 class="page-header__title"><i class="bi bi-file-earmark-text text-warning me-2"></i> Certificate Document Request</h1>
+        <p class="page-header__sub text-muted small mb-0">Issue or log official barangay clearances, indigency certificates, and residency documents.</p>
     </div>
-    <a asp-action="Index" class="btn btn-light border fw-semibold rounded-3"><i class="bi bi-arrow-left me-1"></i> Bumalik</a>
+    <a asp-area="Staff" asp-controller="Certificates" asp-action="Index" class="btn btn-light border fw-semibold rounded-3">
+        <i class="bi bi-arrow-left me-1"></i> Back to List
+    </a>
 </div>
 
 <div class="form-page">
-    <form asp-area="Staff" asp-controller="Certificates" asp-action="Create" method="post">
+    <form asp-area="Staff" asp-controller="Certificates" asp-action="Create" method="post" enctype="multipart/form-data">
         @Html.AntiForgeryToken()
-        <div class="app-card app-card--pad">
+        
+        <div class="app-card app-card--pad" style="max-width: 800px; margin: 0 auto;">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3 fw-bold small"></div>
 
-            <!-- Alert Notification Panel -->
-            @if (TempData["Error"] != null)
-            {
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["Error"]
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            }
+            <!-- Resident Dropdown (INAYOS: ViewBag.Residents ang ginamit galing Controller) -->
+            <div class="mb-3">
+                <label asp-for="ResidentId" class="form-label fw-semibold small">Resident</label>
+                <select asp-for="ResidentId" class="form-select" asp-items="(SelectList)ViewBag.Residents">
+                    <option value="">-- Select Resident --</option>
+                </select>
+                <span asp-validation-for="ResidentId" class="text-danger small"></span>
+            </div>
 
-            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+            <!-- Certificate Type Dropdown -->
+            <div class="mb-3">
+                <label asp-for="CertificateType" class="form-label fw-semibold small">Certificate Type</label>
+                <select asp-for="CertificateType" class="form-select">
+                    <option value="">-- Choose Type --</option>
+                    <option value="Barangay Clearance">Barangay Clearance</option>
+                    <option value="Certificate of Indigency">Certificate of Indigency</option>
+                    <option value="Certificate of Residency">Certificate of Residency</option>
+                </select>
+                <span asp-validation-for="CertificateType" class="text-danger small"></span>
+            </div>
 
+            <!-- Purpose / Dahilan ng Pagkuha -->
+            <div class="mb-3">
+                <label asp-for="Purpose" class="form-label fw-semibold small">Purpose / Dahilan ng Pagkuha</label>
+                <input asp-for="Purpose" class="form-control" placeholder="Halimbawa: Local Employment, Scholarship, ID Requirement" />
+                <span asp-validation-for="Purpose" class="text-danger small"></span>
+            </div>
+
+            <!-- Dates and Status -->
             <div class="row g-3">
-                <!-- Select Resident -->
-                <div class="col-md-12">
-                    <label asp-for="ResidentId" class="form-label fw-semibold">Select Resident</label>
-                    <select asp-for="ResidentId" asp-items="ViewBag.ResidentsList" class="form-select" required>
-                        <option value="">-- Pumili ng Residente --</option>
-                    </select>
-                    <span asp-validation-for="ResidentId" class="text-danger small"></span>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="DateRequested" class="form-label fw-semibold small">Date Requested</label>
+                    <input asp-for="DateRequested" type="date" asp-format="{0:yyyy-MM-dd}" class="form-control" />
+                    <span asp-validation-for="DateRequested" class="text-danger small"></span>
                 </div>
-
-                <!-- Certificate Type (DB-driven) -->
-                <div class="col-md-6">
-                    <label asp-for="CertificateType" class="form-label fw-semibold">Certificate Type</label>
-                    <select asp-for="CertificateType" id="certificateSelect" class="form-select" required>
-                        <option value="">-- Uri ng Sertipiko --</option>
-                        @if (ViewBag.CertificateTypes != null)
-                        {
-                            foreach (var type in (IEnumerable<BarangayCMS.Entities.CertificateType>)ViewBag.CertificateTypes)
-                            {
-                                <option value="@type.CertificateName" data-price="@type.Price">@type.CertificateName</option>
-                            }
-                        }
-                    </select>
-                    <span asp-validation-for="CertificateType" class="text-danger small"></span>
-                </div>
-
-                <!-- Status -->
-                <div class="col-md-6">
-                    <label asp-for="Status" class="form-label fw-semibold">Initial Status</label>
-                    <select asp-for="Status" class="form-select" required>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="Status" class="form-label fw-semibold small">Status</label>
+                    <select asp-for="Status" class="form-select">
                         <option value="Pending">Pending</option>
-                        <option value="Ready for Pickup">Ready for Pickup</option>
                         <option value="Approved">Approved</option>
                         <option value="Issued">Issued</option>
+                        <option value="Cancelled">Cancelled</option>
                     </select>
                     <span asp-validation-for="Status" class="text-danger small"></span>
                 </div>
+            </div>
 
-                <!-- Fee Paid -->
-                <div class="col-md-6">
-                    <label asp-for="FeePaid" class="form-label fw-semibold">Fee Paid (₱)</label>
-                    <input asp-for="FeePaid" type="number" step="0.01" class="form-control" placeholder="0.00" min="0" required />
-                    <span asp-validation-for="FeePaid" class="text-danger small"></span>
-                </div>
-
-                <!-- Purpose -->
-                <div class="col-12">
-                    <label asp-for="Purpose" class="form-label fw-semibold">Purpose / Reason</label>
-                    <textarea asp-for="Purpose" class="form-control" rows="3" placeholder="Halimbawa: Local Employment, Financial Assistance, atbp." required></textarea>
-                    <span asp-validation-for="Purpose" class="text-danger small"></span>
-                </div>
-
-                <!-- Dynamic Requirements (DB-driven) -->
-                <div class="col-12">
-                    <label class="form-label fw-semibold">Certificate Requirements</label>
-                    <partial name="_CertificateRequirements"
-                             view-data='@(new Microsoft.AspNetCore.Mvc.ViewFeatures.ViewDataDictionary(ViewData) {
-                                 { "SelectSelector", "#certificateSelect" },
-                                 { "By", "name" } })' />
-                </div>
+            <!-- Optional Date Issued -->
+            <div class="mb-3">
+                <label asp-for="DateIssued" class="form-label fw-semibold small">Date Issued <span class="text-muted fw-normal">(Optional if Pending)</span></label>
+                <input asp-for="DateIssued" type="date" asp-format="{0:yyyy-MM-dd}" class="form-control" />
+                <span asp-validation-for="DateIssued" class="text-danger small"></span>
             </div>
 
             <!-- Action Buttons -->
-            <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
-                <a asp-action="Index" class="btn btn-light border px-4">Cancel</a>
-                <button type="submit" class="btn btn-brand px-4">
-                    <i class="bi bi-check-circle me-1"></i> Generate Certificate
-                </button>
+            <div class="d-flex gap-2 justify-content-end border-top pt-3 mt-4">
+                <a asp-area="Staff" asp-controller="Certificates" asp-action="Index" class="btn btn-light border px-4 fw-semibold rounded-3">Cancel</a>
+                <button type="submit" class="btn btn-warning text-dark fw-semibold px-4 rounded-3"><i class="bi bi-save me-1"></i> Save Request</button>
             </div>
         </div>
     </form>
 </div>
 
 @section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-    <script src="~/js/certificate-requirements.js" asp-append-version="true"></script>
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }

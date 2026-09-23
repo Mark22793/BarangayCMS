@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using BarangayCMS.Areas.Staff.ViewModels;
 using BarangayCMS.DAL.Context;
 using BarangayCMS.Entities;
+using BarangayCMS.Web.Areas.Staff.ViewModels; // 🔑 INAYOS: Dinagdagan ng .Web
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace BarangayCMS.Areas.Staff.Controllers
+namespace BarangayCMS.Web.Areas.Staff.Controllers // 🔑 INAYOS: Dinagdagan ng .Web
 {
     [Area("Staff")]
     public class AnnouncementsController : Controller
@@ -29,15 +29,15 @@ namespace BarangayCMS.Areas.Staff.Controllers
                     AnnouncementId = a.AnnouncementId,
                     Title = a.Title,
                     Content = a.Content,
-                    DatePosted = a.PublishDate, // Ginamit ang PublishDate mula sa Entity mo
+                    DatePosted = a.PublishDate,
                     Category = string.IsNullOrEmpty(a.Category) ? "General" : a.Category,
                     AuthorName = string.IsNullOrEmpty(a.AuthorName) ? "Staff" : a.AuthorName,
                     PublishDate = a.PublishDate,
                     ExpiryDate = a.ExpiryDate,
                     IsPinned = a.IsPinned
                 })
-                .OrderByDescending(a => a.IsPinned) // Unahing i-display ang mga naka-Pin na anunsyo
-                .ThenByDescending(a => a.PublishDate) // Isunod ang pinakabagong post
+                .OrderByDescending(a => a.IsPinned)
+                .ThenByDescending(a => a.PublishDate)
                 .ToList();
 
             return View(list);
@@ -86,10 +86,10 @@ namespace BarangayCMS.Areas.Staff.Controllers
                     Content = model.Content,
                     Category = model.Category ?? "General",
                     IsPinned = model.IsPinned,
-                    PublishDate = DateTime.Now, // Awtomatikong petsa ngayon kapag gumawa ng bagong anunsyo
+                    PublishDate = DateTime.Now,
                     ExpiryDate = model.ExpiryDate,
-                    AuthorName = User.Identity?.Name ?? "Staff Duty", // Kinukuha ang pangalan ng naka-login na Staff, o default string
-                    ImageUrl = string.Empty // Pwede mong lagyan ng logic para sa file upload sa hinaharap
+                    AuthorName = User.Identity?.Name ?? "Staff Duty",
+                    ImageUrl = string.Empty
                 };
 
                 _context.Announcements.Add(newAnnouncement);
@@ -126,7 +126,6 @@ namespace BarangayCMS.Areas.Staff.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Edit(int id, AnnouncementViewModel model)
         {
-            // The form posts the PK as "AnnouncementId" (not a route "id"), so id can be 0.
             if (id == 0) id = model.AnnouncementId != 0 ? model.AnnouncementId : model.Id;
 
             if (ModelState.IsValid)
@@ -134,13 +133,11 @@ namespace BarangayCMS.Areas.Staff.Controllers
                 var existing = _context.Announcements.FirstOrDefault(a => a.AnnouncementId == id);
                 if (existing == null) return NotFound();
 
-                // I-update ang totoong database columns mula sa form values
                 existing.Title = model.Title;
                 existing.Content = model.Content;
                 existing.Category = model.Category ?? "General";
                 existing.ExpiryDate = model.ExpiryDate;
                 existing.IsPinned = model.IsPinned;
-                // Opsyonal: Pwede mo ring i-update kung sino ang huling nag-edit ng post
                 existing.AuthorName = User.Identity?.Name ?? existing.AuthorName;
 
                 _context.SaveChanges();

@@ -1,44 +1,103 @@
-﻿@model BarangayCMS.Areas.Staff.ViewModels.HealthViewModel
+﻿@model BarangayCMS.Web.Areas.Staff.ViewModels.HealthViewModel
+
 @{
-    Layout = null;
+    Layout = "~/Areas/Staff/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Health Record Details";
 }
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8" />
-    <title>Health Profile Details</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-</head>
-<body class="bg-light">
-    <div class="container py-5" style="max-width: 700px;">
-        <div class="card border-0 shadow-sm p-4 rounded-3 mb-3">
-            <div class="border-bottom pb-3 mb-3">
-                <span class="badge bg-info bg-opacity-10 text-info mb-2 px-2 py-1"><i class="bi bi-heart-pulse-fill"></i> Confidential Health File</span>
-                <h4 class="text-muted small fw-bold mb-1">PATIENT / RESIDENT FULL NAME</h4>
-                <h3 class="fw-bold text-dark mb-0">@Model.ResidentFullName</h3>
-            </div>
 
-            <div class="row g-3 mb-4 small">
-                <div class="col-md-6">
-                    <span class="text-muted d-block fw-bold mb-1">DIAGNOSED MEDICAL CONDITION</span>
-                    <div class="p-2 bg-info bg-opacity-10 text-info border border-info rounded fw-bold">@Model.MedicalCondition</div>
-                </div>
-                <div class="col-md-6">
-                    <span class="text-muted d-block fw-bold mb-1">DATE AND TIME ENCODED</span>
-                    <div class="p-2 bg-light border rounded text-secondary fw-semibold"><i class="bi bi-calendar3 me-1"></i> @Model.DateRecorded.ToString("F")</div>
-                </div>
-            </div>
+<div class="page-header mb-4 d-flex justify-content-between align-items-center">
+    <div>
+        <h1 class="page-header__title fw-bold text-dark"><i class="bi bi-clipboard2-heart-fill text-danger me-2"></i>Medical Record Profile</h1>
+        <p class="page-header__sub text-muted">Kumpletong medikal na tala para kay @Model.ResidentName.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-area="Staff" asp-controller="Health" asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary fw-semibold rounded-3"><i class="bi bi-pencil me-1"></i> Edit</a>
+        <a asp-area="Staff" asp-controller="Health" asp-action="Index" class="btn btn-light border fw-semibold rounded-3"><i class="bi bi-arrow-left me-1"></i> Back</a>
+    </div>
+</div>
 
+<div class="row g-4">
+    <!-- Patient summary + vitals -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm p-4 text-center mb-4 rounded-3">
+            <div class="mx-auto mb-3 d-flex align-items-center justify-content-center rounded-circle bg-danger-subtle text-danger"
+                 style="width:84px;height:84px;font-size:2.4rem;">
+                <i class="bi bi-person-heart"></i>
+            </div>
+            <h4 class="fw-bold mb-1 text-dark">@Model.ResidentName</h4>
+            <span class="badge bg-info-subtle text-info-emphasis rounded-pill w-auto mx-auto px-3 py-1 mb-2">@Model.HealthClassification</span>
             <div>
-                <span class="text-muted small d-block fw-bold mb-1">CLINICAL REMARKS & ADVISORY NOTES</span>
-                <p class="text-secondary p-3 border rounded bg-white font-monospace" style="white-space: pre-line; line-height: 1.6; min-height: 120px;">@Model.Remarks</p>
+                @if (Model.IsVaccinated)
+                {
+                    <span class="badge bg-success-subtle text-success-emphasis rounded-pill px-3 py-2"><i class="bi bi-shield-check me-1"></i>Vaccinated</span>
+                }
+                else
+                {
+                    <span class="badge bg-secondary-subtle text-secondary-emphasis rounded-pill px-3 py-2"><i class="bi bi-shield-x me-1"></i>Not Vaccinated</span>
+                }
             </div>
         </div>
-        <div class="d-flex justify-content-between">
-            <a asp-action="Index" class="btn btn-sm btn-outline-secondary px-3"><i class="bi bi-arrow-left"></i> Patient Index</a>
-            <a asp-action="Edit" asp-route-id="@Model.HealthRecordId" class="btn btn-sm btn-primary px-4"><i class="bi bi-pencil-square"></i> Edit Case Record</a>
+
+        <div class="card border-0 shadow-sm p-4 rounded-3">
+            <h6 class="fw-bold text-uppercase text-muted small mb-3"><i class="bi bi-activity me-1"></i> Vital Signs</h6>
+            <div class="row text-center g-2">
+                <div class="col-4">
+                    <div class="p-2 rounded-3 bg-light">
+                        <div class="fw-bold fs-5 text-dark">@(Model.WeightKg > 0 ? Model.WeightKg.ToString("0.#") : "—")</div>
+                        <div class="text-muted" style="font-size:.72rem;">Weight (kg)</div>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="p-2 rounded-3 bg-light">
+                        <div class="fw-bold fs-5 text-dark">@(Model.HeightCm > 0 ? Model.HeightCm.ToString("0.#") : "—")</div>
+                        <div class="text-muted" style="font-size:.72rem;">Height (cm)</div>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="p-2 rounded-3 bg-light">
+                        <div class="fw-bold fs-5 text-primary">@(Model.Bmi > 0 ? Model.Bmi.ToString("0.#") : "—")</div>
+                        <div class="text-muted" style="font-size:.72rem;">BMI</div>
+                    </div>
+                </div>
+            </div>
+            <div class="d-flex justify-content-between mt-3 pt-3 border-top">
+                <span class="text-muted small">Blood Type</span>
+                <span class="fw-bold text-dark">@(string.IsNullOrEmpty(Model.BloodType) ? "N/A" : Model.BloodType)</span>
+            </div>
+            <div class="d-flex justify-content-between mt-2">
+                <span class="text-muted small">BMI Category</span>
+                <span class="fw-semibold">@Model.BmiCategory</span>
+            </div>
         </div>
     </div>
-</body>
-</html>
+
+    <!-- Clinical details -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm p-4 mb-4 rounded-3">
+            <h6 class="fw-bold text-uppercase text-muted small mb-3"><i class="bi bi-clipboard2-pulse me-1"></i> Consultation Details</h6>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="text-muted small">Medical Condition / Diagnosis</div>
+                    <div class="fw-semibold text-dark">@(string.IsNullOrEmpty(Model.MedicalCondition) ? "None" : Model.MedicalCondition)</div>
+                </div>
+                <div class="col-md-6">
+                    <div class="text-muted small">Attending Health Worker</div>
+                    <div class="fw-semibold text-dark">@(string.IsNullOrEmpty(Model.AttendingHealthWorker) ? "—" : Model.AttendingHealthWorker)</div>
+                </div>
+                <div class="col-md-6">
+                    <div class="text-muted small">Last Check-up</div>
+                    <div class="fw-semibold text-dark"><i class="bi bi-calendar-heart me-1 text-danger"></i>@Model.LastCheckupDate.ToString("MMMM dd, yyyy")</div>
+                </div>
+                <div class="col-md-6">
+                    <div class="text-muted small">Date Recorded</div>
+                    <div class="fw-semibold text-dark"><i class="bi bi-calendar3 me-1 text-primary"></i>@Model.DateRecorded.ToString("MMMM dd, yyyy")</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm p-4 rounded-3">
+            <h6 class="fw-bold text-uppercase text-muted small mb-3"><i class="bi bi-journal-medical me-1"></i> Remarks & Clinical Notes</h6>
+            <p class="mb-0 text-dark" style="white-space:pre-line;">@(string.IsNullOrWhiteSpace(Model.Remarks) ? "No additional clinical notes were recorded for this consultation." : Model.Remarks)</p>
+        </div>
+    </div>
+</div>

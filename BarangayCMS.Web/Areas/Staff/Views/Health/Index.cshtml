@@ -1,26 +1,25 @@
-@model IEnumerable<BarangayCMS.Areas.Staff.ViewModels.HealthViewModel>
-@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@model IEnumerable<BarangayCMS.Web.Areas.Staff.ViewModels.HealthViewModel>
 
 @{
     Layout = "~/Areas/Staff/Views/Shared/_Layout.cshtml";
-    ViewData["Title"] = "Barangay Health Center Desk";
+    ViewData["Title"] = "Health Center Management";
 
-    var records = Model?.ToList() ?? new List<BarangayCMS.Areas.Staff.ViewModels.HealthViewModel>();
+    // INAYOS: ViewModels ang ginamit na namespace
+    var records = Model?.ToList() ?? new List<BarangayCMS.Web.Areas.Staff.ViewModels.HealthViewModel>();
     var totalRecords = records.Count;
     var uniquePatients = records.Select(r => r.ResidentId).Distinct().Count();
     var vaccinated = records.Count(r => r.IsVaccinated);
     var vaxRate = totalRecords > 0 ? (int)Math.Round(vaccinated * 100.0 / totalRecords) : 0;
-    var latest = records.Any() ? records.Max(r => r.LastCheckupDate) : (DateTime?)null;
+    var latest = records.Any() ? records.Max(r => r.DateRecorded) : (DateTime?)null;
 }
 
 <div class="page-header">
     <div>
-        <small class="text-muted text-uppercase fw-bold">Medical</small>
         <h1 class="page-header__title"><i class="bi bi-heart-pulse-fill"></i> Health Center Records</h1>
-        <p class="page-header__sub">Monitor maternal health profiles, vital signs, immunization records, and medical consultations.</p>
+        <p class="page-header__sub">Track patient consultations, vital signs, immunization status, and clinical notes.</p>
     </div>
-    <a asp-action="Create" class="btn btn-success fw-semibold px-4 shadow-sm rounded-3">
-        <i class="bi bi-plus-lg me-1"></i> New Consultation Log
+    <a href="/Staff/Health/Create" class="btn btn-success shadow-sm fw-semibold rounded-3">
+        <i class="bi bi-plus-lg me-1"></i> Log Patient Check-up
     </a>
 </div>
 
@@ -47,7 +46,7 @@
     <div class="col-6 col-xl-3">
         <div class="stat-card">
             <div class="stat-card__icon"><i class="bi bi-calendar-heart-fill"></i></div>
-            <div><p class="stat-card__label">Latest Check-up</p><p class="stat-card__value" style="font-size:1.05rem;">@(latest.HasValue ? latest.Value.ToString("MMM dd, yyyy") : "—")</p></div>
+            <div><p class="stat-card__label">Latest Entry</p><p class="stat-card__value" style="font-size:1.05rem;">@(latest.HasValue ? latest.Value.ToString("MMM dd, yyyy") : "—")</p></div>
         </div>
     </div>
 </div>
@@ -59,35 +58,30 @@
                 <tr>
                     <th class="ps-3">Patient</th>
                     <th>Classification</th>
-                    <th>Condition</th>
+                    <th>Condition / Diagnosis</th>
+                    <th>Blood</th>
                     <th>BMI</th>
                     <th>Vaccinated</th>
-                    <th>Last Check-up</th>
+                    <th>Recorded</th>
                     <th class="text-end pe-3">Actions</th>
                 </tr>
             </thead>
             <tbody>
-                @if (!records.Any())
-                {
-                    <tr>
-                        <td colspan="7" class="text-center py-5 text-muted">
-                            <i class="bi bi-activity display-6 d-block mb-2 text-secondary opacity-50"></i>
-                            Walang pasyente o konsultasyon na nakatala sa registry.
-                        </td>
-                    </tr>
-                }
-                else
+                @if (records.Any())
                 {
                     @foreach (var item in records)
                     {
                         <tr>
                             <td class="ps-3 fw-semibold text-dark">
                                 <i class="bi bi-person-heart text-danger me-1"></i> @item.ResidentName
-                                <small class="d-block text-muted" style="font-size: 0.72rem;">Blood Type: @(string.IsNullOrEmpty(item.BloodType) ? "N/A" : item.BloodType)</small>
+                                @if (!string.IsNullOrWhiteSpace(item.AttendingHealthWorker))
+                                {
+                                    <small class="d-block text-muted" style="font-size:.72rem;">by @item.AttendingHealthWorker</small>
+                                }
                             </td>
                             <td><span class="badge bg-info-subtle text-info-emphasis rounded-pill">@item.HealthClassification</span></td>
                             <td>
-                                @if (item.MedicalCondition == "None" || string.IsNullOrEmpty(item.MedicalCondition))
+                                @if (string.IsNullOrEmpty(item.MedicalCondition) || item.MedicalCondition == "None")
                                 {
                                     <span class="text-muted">None</span>
                                 }
@@ -96,6 +90,7 @@
                                     <span class="badge bg-danger-subtle text-danger-emphasis fw-semibold">@item.MedicalCondition</span>
                                 }
                             </td>
+                            <td><span class="fw-semibold">@(string.IsNullOrEmpty(item.BloodType) ? "N/A" : item.BloodType)</span></td>
                             <td>
                                 @if (item.Bmi > 0)
                                 {
@@ -117,14 +112,23 @@
                                     <span class="badge bg-secondary-subtle text-secondary-emphasis rounded-pill"><i class="bi bi-x"></i> No</span>
                                 }
                             </td>
-                            <td class="text-muted small">@item.LastCheckupDate.ToString("MM/dd/yyyy")</td>
+                            <td class="text-muted small"><i class="bi bi-calendar3 me-1"></i>@item.DateRecorded.ToString("MM/dd/yyyy")</td>
                             <td class="text-end pe-3">
-                                <a asp-action="ViewRecord" asp-route-id="@item.Id" class="btn btn-sm btn-outline-info me-1" title="History"><i class="bi bi-folder2-open"></i></a>
-                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary me-1" title="Edit"><i class="bi bi-pencil"></i></a>
-                                <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></a>
+                                <a href="/Staff/Health/Details/@item.Id" class="btn btn-sm btn-outline-info me-1" title="Details"><i class="bi bi-eye"></i></a>
+                                <a href="/Staff/Health/Edit/@item.Id" class="btn btn-sm btn-outline-primary me-1" title="Edit"><i class="bi bi-pencil"></i></a>
+                                <a href="/Staff/Health/Delete/@item.Id" class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></a>
                             </td>
                         </tr>
                     }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="8" class="text-center py-5 text-muted">
+                            <i class="bi bi-heart-pulse display-6 d-block mb-2 text-danger opacity-50"></i>
+                            <span>No patient records or clinic transactions logged yet.</span>
+                        </td>
+                    </tr>
                 }
             </tbody>
         </table>

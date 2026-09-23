@@ -1,275 +1,271 @@
-﻿using System;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Hosting;
+﻿using BarangayCMS.DAL.Context;
+using BarangayCMS.Entities;
 using BarangayCMS.Web.Areas.Staff.ViewModels;
-using BarangayCMS.BLL.Interfaces;
-using BarangayCMS.DTO;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using BarangayCMS.DAL.Context;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 
-namespace BarangayCMS.Areas.Staff.Controllers
+namespace BarangayCMS.Web.Areas.Staff.Controllers
 {
     [Area("Staff")]
     public class CertificatesController : Controller
     {
-        private readonly ICertificateService _certificateService;
-        private readonly ICertificateRequirementService _requirementService;
-        private readonly IResidentService _residentService;
         private readonly ApplicationDbContext _context;
-        private readonly IWebHostEnvironment _environment;
 
-        public CertificatesController(
-            ICertificateService certificateService,
-            ICertificateRequirementService requirementService,
-            IResidentService residentService,
-            ApplicationDbContext context,
-            IWebHostEnvironment environment)
+        public CertificatesController(ApplicationDbContext context)
         {
-            _certificateService = certificateService;
-            _requirementService = requirementService;
-            _residentService = residentService;
             _context = context;
-            _environment = environment;
         }
 
-        // Ipuno ang dropdowns para sa Create/Edit form.
-        private async Task PopulateFormListsAsync(int? selectedResidentId = null)
-        {
-            var residents = await _residentService.GetAllResidentsAsync();
-            ViewBag.ResidentsList = new SelectList(residents.Select(r => new {
-                Id = r.Id,
-                FullName = $"{r.LastName}, {r.FirstName} {r.MiddleName}".Trim()
-            }), "Id", "FullName", selectedResidentId);
-
-            ViewBag.CertificateTypes = await _context.CertificateTypes
-                .OrderBy(c => c.CertificateName)
-                .ToListAsync();
-        }
-
-        // GET: /Staff/Certificates/Index
+        // GET: Staff/Certificates
         public async Task<IActionResult> Index()
         {
-            var dtoList = await _certificateService.GetAllCertificatesAsync();
-            var viewModelList = dtoList.Select(c => new CertificateViewModel
-            {
-                CertificateId = c.Id,
-                ResidentId = c.ResidentId,
-                ResidentName = c.ResidentName,
-                CertificateType = c.CertificateType,
-                Purpose = c.Purpose,
-                ControlNumber = string.IsNullOrEmpty(c.ControlNumber) ? "N/A" : c.ControlNumber,
-                FeePaid = c.FeePaid,
-                PaymentReceiptPath = c.PaymentReceiptPath,
-                Status = c.Status,
-                DateIssued = c.IssuedDate != default ? c.IssuedDate : (DateTime?)null,
-                IssuedBy = c.IssuedBy
-            }).ToList();
+            var certificates = await _context.Set<Certificate>()
+                .OrderByDescending(c => c.DateRequested)
+                .Select(c => new CertificateViewModel
+                {
+                    CertificateId = c.CertificateId,
+                    ResidentId = c.ResidentId ?? 0,
+                    CertificateType = c.CertificateType ?? "Barangay Clearance",
+                    Purpose = c.Purpose ?? string.Empty,
+                    ControlNumber = string.IsNullOrEmpty(c.ControlNumber) ? $"CERT-{c.CertificateId}" : c.ControlNumber,
+                    Status = c.Status ?? "Pending",
+                    FeePaid = c.FeePaid,
+                    PaymentReceiptPath = c.PaymentReceiptPath ?? string.Empty,
+                    DateRequested = c.DateRequested,
+                    DateIssued = c.DateIssued,
+                    IssuedBy = c.IssuedBy ?? string.Empty,
+                    ResidentName = string.IsNullOrEmpty(c.ResidentName)
+                        ? (_context.Residents
+                            .Where(r => r.ResidentId == c.ResidentId)
+                            .Select(r => r.LastName + ", " + r.FirstName + (string.IsNullOrEmpty(r.MiddleName) ? "" : " " + r.MiddleName))
+                            .FirstOrDefault() ?? "Unknown Resident")
+                        : c.ResidentName
+                }).ToListAsync();
 
-            return View(viewModelList);
+            return View(certificates);
         }
 
-        // POST: /Staff/Certificates/Approve/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Approve(int id)
-        {
-            string controlNumber = $"BRGY-{DateTime.Now:yyyyMMdd}-{Guid.NewGuid().ToString().Substring(0, 4).ToUpper()}";
-            string currentStaff = User.Identity?.Name ?? "Staff Admin";
-
-            bool isSuccess = await _certificateService.IssueCertificateAsync(id, controlNumber, currentStaff);
-
-            if (!isSuccess)
-            {
-                isSuccess = await _certificateService.UpdateStatusAsync(id, "Approved");
-            }
-
-            if (isSuccess)
-            {
-                return RedirectToAction(nameof(Print), new { id = id });
-            }
-
-            TempData["Error"] = "Hindi ma-aprubahan ang sertipiko.";
-            return RedirectToAction(nameof(Index));
-        }
-
-        // GET: /Staff/Certificates/Print/5
-        [HttpGet]
-        public async Task<IActionResult> Print(int id)
-        {
-            var cert = await _context.Certificates
-                .Include(c => c.Resident)
-                .FirstOrDefaultAsync(c => c.CertificateId == id);
-
-            if (cert == null) return NotFound();
-
-            // Automatic na palitan ang Status sa "Success" kapag ginamit ang Print
-            cert.Status = "Success";
-            cert.DateIssued ??= DateTime.Now;
-            _context.Certificates.Update(cert);
-            await _context.SaveChangesAsync();
-
-            var certType = await _context.CertificateTypes
-                .FirstOrDefaultAsync(ct => ct.CertificateName.ToLower() == cert.CertificateType.ToLower());
-
-            if (certType != null && !string.IsNullOrEmpty(certType.TemplateFileName))
-            {
-                string fileName = certType.TemplateFileName;
-
-                string[] possiblePaths = new[]
-                {
-                    Path.Combine(_environment.WebRootPath, "templates", fileName),
-                    Path.Combine(_environment.WebRootPath, "uploads", fileName),
-                    Path.Combine(_environment.WebRootPath, "uploads", "templates", fileName),
-                    Path.Combine(_environment.WebRootPath, fileName)
-                };
-
-                string? foundPath = possiblePaths.FirstOrDefault(p => System.IO.File.Exists(p));
-
-                if (foundPath == null && Directory.Exists(_environment.WebRootPath))
-                {
-                    foundPath = Directory.GetFiles(_environment.WebRootPath, fileName, SearchOption.AllDirectories).FirstOrDefault();
-                }
-
-                if (foundPath != null && System.IO.File.Exists(foundPath))
-                {
-                    byte[] fileBytes = await System.IO.File.ReadAllBytesAsync(foundPath);
-                    string contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-
-                    return File(fileBytes, contentType, $"{cert.CertificateType}_{cert.ResidentName ?? "Document"}.docx");
-                }
-            }
-
-            string displayName = !string.IsNullOrEmpty(cert.ResidentName)
-                ? cert.ResidentName
-                : (cert.Resident != null ? $"{cert.Resident.FirstName} {cert.Resident.LastName}" : "Unknown Resident");
-
-            int day = DateTime.Now.Day;
-            string suffix = (day % 10 == 1 && day != 11) ? "st" :
-                           (day % 10 == 2 && day != 12) ? "nd" :
-                           (day % 10 == 3 && day != 13) ? "rd" : "th";
-
-            ViewBag.FormattedDate = $"{day}{suffix} day of {DateTime.Now:MMMM, yyyy}";
-
-            var viewModel = new CertificateViewModel
-            {
-                CertificateId = cert.CertificateId,
-                ResidentId = cert.ResidentId ?? 0,
-                ResidentName = displayName,
-                CertificateType = string.IsNullOrEmpty(cert.CertificateType) ? "BARANGAY CERTIFICATE" : cert.CertificateType.ToUpper(),
-                Purpose = cert.Purpose,
-                ControlNumber = cert.ControlNumber,
-                DateRequested = cert.DateRequested,
-                DateIssued = cert.DateIssued ?? DateTime.Now,
-                Status = cert.Status,
-                FeePaid = cert.FeePaid,
-                PaymentReceiptPath = cert.PaymentReceiptPath,
-                IssuedBy = string.IsNullOrEmpty(cert.IssuedBy) ? "PUNONG BARANGAY" : cert.IssuedBy
-            };
-
-            return View("PrintTemplate", viewModel);
-        }
-        // GET: /Staff/Certificates/Create
+        // GET: Staff/Certificates/Create
         public async Task<IActionResult> Create()
         {
-            await PopulateFormListsAsync();
-            return View(new CertificateViewModel());
+            await PopulateResidentsDropDownList();
+            return View(new CertificateViewModel { DateRequested = DateTime.Now });
         }
 
-        // POST: /Staff/Certificates/Create
+        // POST: Staff/Certificates/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(CertificateViewModel model, int[]? confirmedRequirements)
+        public async Task<IActionResult> Create(CertificateViewModel model)
         {
-            // Opsyonal ang mga field na ito para hindi ma-block ng ModelState
-            ModelState.Remove("ControlNumber");
-            ModelState.Remove("ResidentName");
-            ModelState.Remove("IssuedBy");
-            ModelState.Remove("OfficialReceiptNumber");
-
-            // 🔒 Server-side validation ng required documents para sa napiling sertipiko.
-            var activeReqs = (await _requirementService
-                .GetActiveByCertificateNameAsync(model.CertificateType ?? string.Empty)).ToList();
-            var confirmed = confirmedRequirements ?? System.Array.Empty<int>();
-            var missing = activeReqs
-                .Where(r => r.IsRequired && !confirmed.Contains(r.Id))
-                .Select(r => r.RequirementName)
-                .ToList();
-
-            foreach (var name in missing)
-            {
-                ModelState.AddModelError("", $"Please complete the following required document: {name}");
-            }
-
             if (ModelState.IsValid)
             {
-                var resident = await _residentService.GetResidentByIdAsync(model.ResidentId);
-                string buongPangalan = "Unknown";
-
-                if (resident != null)
+                var residentName = model.ResidentName;
+                if (string.IsNullOrEmpty(residentName) && model.ResidentId > 0)
                 {
-                    string middleInit = !string.IsNullOrEmpty(resident.MiddleName) ? $"{resident.MiddleName[0]}." : "";
-                    string suffix = !string.IsNullOrEmpty(resident.Suffix) ? $" {resident.Suffix}" : "";
-                    buongPangalan = $"{resident.FirstName} {middleInit} {resident.LastName}{suffix}".Trim();
+                    var resident = await _context.Residents.FindAsync(model.ResidentId);
+                    if (resident != null)
+                    {
+                        residentName = $"{resident.LastName}, {resident.FirstName}";
+                    }
                 }
 
-                string generatedControlNo = $"BRGY-{DateTime.Now:yyyyMMdd}-{Guid.NewGuid().ToString().Substring(0, 4).ToUpper()}";
-
-                var newCertificateDto = new CertificateDTO
+                var certificate = new Certificate
                 {
-                    ResidentId = model.ResidentId,
-                    ResidentName = buongPangalan,
-                    CertificateType = model.CertificateType ?? string.Empty,
-                    Purpose = model.Purpose ?? string.Empty,
-                    FeePaid = model.FeePaid,
-                    PaymentReceiptPath = model.PaymentReceiptPath ?? string.Empty,
+                    ResidentId = model.ResidentId > 0 ? model.ResidentId : null,
+                    ResidentName = residentName ?? "Walk-in Resident",
+                    CertificateType = model.CertificateType,
+                    Purpose = model.Purpose,
+                    ControlNumber = "CERT-" + DateTime.Now.ToString("yyyyMMddHHmmss"),
                     Status = string.IsNullOrEmpty(model.Status) ? "Pending" : model.Status,
-                    ControlNumber = generatedControlNo,
-                    IssuedDate = DateTime.Now,
-                    IssuedBy = User.Identity?.Name ?? "Staff Admin"
+                    FeePaid = model.FeePaid,
+                    PaymentReceiptPath = model.PaymentReceiptPath,
+                    DateRequested = DateTime.Now
                 };
 
-                bool isSaved = await _certificateService.RequestCertificateAsync(newCertificateDto);
-                if (isSaved)
-                {
-                    TempData["Success"] = "Matagumpay na na-generate at na-save sa database!";
-                    return RedirectToAction(nameof(Index));
-                }
-
-                ModelState.AddModelError(string.Empty, "Nagkaroon ng problema sa pag-save sa database.");
+                _context.Add(certificate);
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
             }
 
-            TempData["Error"] = "Hindi na-save ang sertipiko. Pakisuri ang mga patlang sa pormularyo.";
-
-            await PopulateFormListsAsync(model.ResidentId);
+            await PopulateResidentsDropDownList(model.ResidentId);
             return View(model);
         }
 
-        // GET: /Staff/Certificates/Details/5
-        public async Task<IActionResult> Details(int id)
+        // GET: Staff/Certificates/Edit/5
+        public async Task<IActionResult> Edit(int? id)
         {
-            var certificateDto = await _certificateService.GetCertificateByIdAsync(id);
-            if (certificateDto == null) return NotFound();
+            if (id == null) return NotFound();
 
-            var viewModel = new CertificateViewModel
+            var cert = await _context.Set<Certificate>().FindAsync(id);
+            if (cert == null) return NotFound();
+
+            var model = new CertificateViewModel
             {
-                CertificateId = certificateDto.Id,
-                ResidentId = certificateDto.ResidentId,
-                ResidentName = certificateDto.ResidentName,
-                CertificateType = certificateDto.CertificateType,
-                Purpose = certificateDto.Purpose,
-                ControlNumber = certificateDto.ControlNumber,
-                FeePaid = certificateDto.FeePaid,
-                PaymentReceiptPath = certificateDto.PaymentReceiptPath,
-                Status = certificateDto.Status,
-                DateIssued = certificateDto.IssuedDate != default ? certificateDto.IssuedDate : (DateTime?)null,
-                IssuedBy = certificateDto.IssuedBy
+                CertificateId = cert.CertificateId,
+                ResidentId = cert.ResidentId ?? 0,
+                ResidentName = cert.ResidentName,
+                CertificateType = cert.CertificateType,
+                Purpose = cert.Purpose,
+                ControlNumber = cert.ControlNumber,
+                Status = cert.Status,
+                FeePaid = cert.FeePaid,
+                PaymentReceiptPath = cert.PaymentReceiptPath,
+                DateRequested = cert.DateRequested,
+                DateIssued = cert.DateIssued,
+                IssuedBy = cert.IssuedBy
             };
 
-            return View(viewModel);
+            await PopulateResidentsDropDownList(model.ResidentId);
+            return View(model);
+        }
+
+        // POST: Staff/Certificates/Edit/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, CertificateViewModel model)
+        {
+            if (id != model.CertificateId) return NotFound();
+
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    var certToUpdate = await _context.Set<Certificate>().FindAsync(id);
+                    if (certToUpdate == null) return NotFound();
+
+                    certToUpdate.ResidentId = model.ResidentId > 0 ? model.ResidentId : null;
+                    certToUpdate.CertificateType = model.CertificateType;
+                    certToUpdate.Purpose = model.Purpose;
+                    certToUpdate.Status = model.Status;
+                    certToUpdate.FeePaid = model.FeePaid;
+
+                    if (model.Status == "Approved" && certToUpdate.DateIssued == null)
+                    {
+                        certToUpdate.DateIssued = DateTime.Now;
+                        certToUpdate.IssuedBy = User.Identity?.Name ?? "Barangay Staff";
+                    }
+
+                    _context.Update(certToUpdate);
+                    await _context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!_context.Set<Certificate>().Any(e => e.CertificateId == model.CertificateId))
+                        return NotFound();
+                    else
+                        throw;
+                }
+                return RedirectToAction(nameof(Index));
+            }
+
+            await PopulateResidentsDropDownList(model.ResidentId);
+            return View(model);
+        }
+
+        // GET: Staff/Certificates/Details/5
+        public async Task<IActionResult> Details(int? id)
+        {
+            if (id == null) return NotFound();
+
+            var cert = await _context.Set<Certificate>().FirstOrDefaultAsync(m => m.CertificateId == id);
+            if (cert == null) return NotFound();
+
+            var model = new CertificateViewModel
+            {
+                CertificateId = cert.CertificateId,
+                ResidentId = cert.ResidentId ?? 0,
+                ResidentName = cert.ResidentName,
+                CertificateType = cert.CertificateType,
+                Purpose = cert.Purpose,
+                ControlNumber = cert.ControlNumber,
+                Status = cert.Status,
+                FeePaid = cert.FeePaid,
+                PaymentReceiptPath = cert.PaymentReceiptPath,
+                DateRequested = cert.DateRequested,
+                DateIssued = cert.DateIssued,
+                IssuedBy = cert.IssuedBy
+            };
+
+            return View(model);
+        }
+
+        // 📌 INIDAGDAG: GET: Staff/Certificates/Delete/5
+        public async Task<IActionResult> Delete(int? id)
+        {
+            if (id == null) return NotFound();
+
+            var cert = await _context.Set<Certificate>().FirstOrDefaultAsync(m => m.CertificateId == id);
+            if (cert == null) return NotFound();
+
+            var model = new CertificateViewModel
+            {
+                CertificateId = cert.CertificateId,
+                ResidentId = cert.ResidentId ?? 0,
+                ResidentName = cert.ResidentName,
+                CertificateType = cert.CertificateType,
+                Purpose = cert.Purpose,
+                ControlNumber = cert.ControlNumber,
+                Status = cert.Status,
+                FeePaid = cert.FeePaid,
+                DateRequested = cert.DateRequested
+            };
+
+            return View(model);
+        }
+
+        // 📌 INIDAGDAG: POST: Staff/Certificates/Delete/5
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(int id)
+        {
+            var cert = await _context.Set<Certificate>().FindAsync(id);
+            if (cert != null)
+            {
+                _context.Set<Certificate>().Remove(cert);
+                await _context.SaveChangesAsync();
+            }
+            return RedirectToAction(nameof(Index));
+        }
+
+        // 📌 INIDAGDAG: GET: Staff/Certificates/Print/5
+        public async Task<IActionResult> Print(int? id)
+        {
+            if (id == null) return NotFound();
+
+            var cert = await _context.Set<Certificate>().FirstOrDefaultAsync(m => m.CertificateId == id);
+            if (cert == null) return NotFound();
+
+            var model = new CertificateViewModel
+            {
+                CertificateId = cert.CertificateId,
+                ResidentId = cert.ResidentId ?? 0,
+                ResidentName = cert.ResidentName,
+                CertificateType = cert.CertificateType,
+                Purpose = cert.Purpose,
+                ControlNumber = cert.ControlNumber,
+                Status = cert.Status,
+                FeePaid = cert.FeePaid,
+                DateRequested = cert.DateRequested,
+                DateIssued = cert.DateIssued ?? DateTime.Now,
+                IssuedBy = string.IsNullOrEmpty(cert.IssuedBy) ? "Barangay Staff" : cert.IssuedBy
+            };
+
+            return View("PrintTemplate", model);
+        }
+
+        private async Task PopulateResidentsDropDownList(object? selectedResident = null)
+        {
+            var residentsQuery = await _context.Residents
+                .Where(r => r.IsResident)
+                .OrderBy(r => r.LastName)
+                .Select(r => new { Id = r.ResidentId, FullName = r.LastName + ", " + r.FirstName })
+                .ToListAsync();
+
+            ViewBag.Residents = new SelectList(residentsQuery, "Id", "FullName", selectedResident);
         }
     }
 }

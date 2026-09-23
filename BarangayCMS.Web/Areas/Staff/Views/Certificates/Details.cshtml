@@ -1,90 +1,63 @@
 @model BarangayCMS.Web.Areas.Staff.ViewModels.CertificateViewModel
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
 @{
     Layout = "~/Areas/Staff/Views/Shared/_Layout.cshtml";
-    ViewData["Title"] = "Certificate Request Details";
+    ViewData["Title"] = "Certificate Details";
 }
 
-<div class="page-header">
-    <div>
-        <small class="text-muted text-uppercase fw-bold">Documents</small>
-        <h1 class="page-header__title"><i class="bi bi-info-circle-fill"></i> Request Details</h1>
-        <p class="page-header__sub">Full log overview for this certificate request.</p>
-    </div>
-    <a asp-action="Index" class="btn btn-light border fw-semibold rounded-3"><i class="bi bi-arrow-left me-1"></i> Back</a>
-</div>
+<div class="container py-4" style="max-width: 650px;">
+    <div class="app-card app-card--pad">
+        <div class="d-flex align-items-center justify-content-between border-bottom pb-3 mb-3">
+            <h4 class="mb-0 fw-bold text-dark"><i class="bi bi-file-earmark-text text-warning me-2"></i>Certificate Details</h4>
+            <span class="badge bg-dark px-3 py-2 fs-6">@Model.Status</span>
+        </div>
 
-<div class="form-page">
-    <div class="app-card app-card--pad mb-3">
-        <h5 class="fw-bold text-dark mb-3"><i class="bi bi-clipboard-data text-primary me-2"></i>Log Overview</h5>
-        <div class="row g-3 small">
-            <div class="col-md-6">
-                <span class="text-muted d-block">Control Number</span>
-                <strong class="font-monospace">@(string.IsNullOrEmpty(Model.ControlNumber) ? "N/A" : Model.ControlNumber)</strong>
-            </div>
-
-            <div class="col-md-6">
-                <span class="text-muted d-block">Resident</span>
-                <strong>@Model.ResidentName</strong>
-            </div>
-
-            <div class="col-md-6">
-                <span class="text-muted d-block">Document Requested</span>
-                <strong>@Model.CertificateType</strong>
-            </div>
-
-            <div class="col-md-6">
-                <span class="text-muted d-block">Purpose</span>
-                <strong>@Model.Purpose</strong>
-            </div>
-
-            <div class="col-md-6">
-                <span class="text-muted d-block">Date Logged</span>
-                <span class="text-secondary">@Model.DateRequested.ToString("f")</span>
-            </div>
-
-            <div class="col-md-6">
-                <span class="text-muted d-block">Status</span>
-                @if (Model.Status == "Ready for Pickup")
+        <div class="card-body p-0">
+            <table class="table table-borderless align-middle fs-6">
+                <tr>
+                    <td class="fw-bold text-muted" style="width: 35%;">Resident Name:</td>
+                    <td class="fw-semibold text-dark">@Model.ResidentFullName</td>
+                </tr>
+                <tr>
+                    <td class="fw-bold text-muted">Certificate Type:</td>
+                    <td class="fw-semibold text-primary">@Model.CertificateType</td>
+                </tr>
+                @if (!string.IsNullOrWhiteSpace(Model.Purpose))
                 {
-                    <span class="badge bg-info-subtle text-info-emphasis fw-semibold">Ready for Pickup</span>
+                    <tr>
+                        <td class="fw-bold text-muted">Purpose:</td>
+                        <td class="fw-semibold text-dark">@Model.Purpose</td>
+                    </tr>
                 }
-                else if (Model.Status == "Done" || Model.Status == "Issued" || Model.Status == "Approved" || Model.Status == "Success")
+                <tr>
+                    <td class="fw-bold text-muted">Date Requested:</td>
+                    <td>@Model.DateRequested.ToString("MMMM dd, yyyy")</td>
+                </tr>
+                <tr>
+                    <td class="fw-bold text-muted">Date Issued:</td>
+                    <td>@(Model.DateIssued.HasValue ? Model.DateIssued.Value.ToString("MMMM dd, yyyy") : "Pending")</td>
+                </tr>
+            </table>
+
+            <div class="d-flex justify-content-between mt-4 pt-3 border-top">
+                <a asp-area="Staff" asp-controller="Certificates" asp-action="Index" class="btn btn-light border px-4 fw-semibold rounded-3">
+                    Back to List
+                </a>
+
+                @if (Model.Status == "Pending")
                 {
-                    <span class="badge bg-success-subtle text-success fw-semibold">@Model.Status</span>
-                }
-                else if (Model.Status == "Rejected")
-                {
-                    <span class="badge bg-danger-subtle text-danger fw-semibold">@Model.Status</span>
+                    <a asp-area="Staff" asp-controller="Certificates" asp-action="Approve" asp-route-id="@Model.Id" class="btn btn-success px-4 fw-bold rounded-3">
+                        <i class="bi bi-check-circle me-1"></i> Approve Request
+                    </a>
                 }
                 else
                 {
-                    <span class="badge bg-warning-subtle text-warning fw-semibold">@Model.Status</span>
+                    <a asp-area="Staff" asp-controller="Certificates" asp-action="Print" asp-route-id="@Model.Id" target="_blank" class="btn btn-primary px-4 fw-bold rounded-3">
+                        <i class="bi bi-printer me-1"></i> Generate / Print
+                    </a>
                 }
             </div>
-
-            <div class="col-md-6">
-                <span class="text-muted d-block">Fee Paid</span>
-                <strong>₱@Model.FeePaid.ToString("N2")</strong>
-            </div>
-
-            @if (Model.DateIssued != null)
-            {
-                <div class="col-12 border-top pt-3">
-                    <span class="text-muted d-block">Release Date</span>
-                    <span class="text-success fw-bold">@Model.DateIssued?.ToString("f")</span>
-                </div>
-            }
-        </div>
-
-        <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
-            <a asp-action="Index" class="btn btn-light border px-4"><i class="bi bi-arrow-left me-1"></i> Back</a>
-            @if (Model.Status == "Issued" || Model.Status == "Approved" || Model.Status == "Ready for Pickup" || Model.Status == "Done" || Model.Status == "Success")
-            {
-                <a asp-action="Print" asp-route-id="@Model.CertificateId" class="btn btn-brand px-4" target="_blank">
-                    <i class="bi bi-printer me-1"></i> Print Document
-                </a>
-            }
         </div>
     </div>
 </div>

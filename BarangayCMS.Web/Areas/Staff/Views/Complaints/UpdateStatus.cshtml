@@ -1,0 +1,41 @@
+﻿@model BarangayCMS.Web.Areas.Staff.ViewModels.ComplaintViewModel
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+@{
+    Layout = "~/Areas/Staff/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Update Legal State Status";
+}
+
+<div class="container py-4" style="max-width: 550px;">
+    <div class="app-card app-card--pad">
+        <h4 class="mb-1 fw-bold text-dark"><i class="bi bi-arrow-left-right text-warning me-2"></i>Set Hearing / Resolution Status</h4>
+        <p class="text-muted small mb-3">Modify the resolution stage tracking metrics step for this dispute narrative instance.</p>
+
+        <div class="p-3 bg-light rounded-3 border mb-4">
+            <p class="mb-1"><strong>Subject:</strong> @Model.Subject</p>
+            <p class="mb-0"><strong>Current State:</strong> <span class="text-primary fw-bold">@Model.Status</span></p>
+        </div>
+
+        <form asp-area="Staff" asp-controller="Complaints" asp-action="UpdateStatus" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Id" />
+
+            <div class="mb-4">
+                <label class="form-label fw-bold small text-secondary">Transition Destination Status</label>
+                <select asp-for="Status" class="form-select">
+                    <option value="Pending">Pending</option>
+                    <option value="Assigned">Assigned</option>
+                    <option value="Investigation">Investigation</option>
+                    <option value="Resolved">Resolved</option>
+                    <option value="Dismissed">Dismissed</option>
+                </select>
+                <span asp-validation-for="Status" class="text-danger small"></span>
+            </div>
+
+            <div class="d-flex gap-3 justify-content-between border-top pt-3">
+                <a asp-area="Staff" asp-controller="Complaints" asp-action="Details" asp-route-id="@Model.Id" class="btn btn-light border px-4 fw-semibold rounded-3">Discard</a>
+                <button type="submit" class="btn btn-success px-4 fw-bold rounded-3">Authorize State Transition</button>
+            </div>
+        </form>
+    </div>
+</div>

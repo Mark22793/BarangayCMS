@@ -1,30 +1,84 @@
-﻿@model BarangayCMS.Areas.Staff.ViewModels.AnnouncementViewModel
+﻿@model BarangayCMS.Web.Areas.Staff.ViewModels.AnnouncementViewModel
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
 @{
-    Layout = null;
+    Layout = "~/Areas/Staff/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Detalye ng Patalastas";
+
+    var isActive = !Model.ExpiryDate.HasValue || Model.ExpiryDate.Value >= DateTime.Now;
+    var imgSrc = Model.HasImage ? Url.Action("Image", "Announcement", new { area = "", id = Model.AnnouncementId }) : Model.ImageUrl;
+    var hasImage = Model.HasImage || !string.IsNullOrWhiteSpace(Model.ImageUrl);
 }
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8" />
-    <title>Announcement Details</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-</head>
-<body class="bg-light">
-    <div class="container py-5" style="max-width: 700px;">
-        <div class="card border-0 shadow-sm p-4 rounded-3 mb-3">
-            <div class="border-bottom pb-3 mb-3">
-                <span class="badge bg-info bg-opacity-10 text-info mb-2 px-2 py-1"><i class="bi bi-info-circle"></i> Official Board Post</span>
-                <h3 class="fw-bold text-dark mb-1">@Model.Title</h3>
-                <small class="text-muted"><i class="bi bi-clock"></i> Posted on @Model.DatePosted.ToString("F")</small>
+
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <a href="/Staff/Announcements" class="btn btn-sm btn-light border mb-2 rounded-3"><i class="bi bi-arrow-left me-1"></i> Back to List</a>
+        <h1 class="page-header__title"><i class="bi bi-info-circle-fill me-2"></i>Buong Detalye ng Patalastas</h1>
+    </div>
+    <a asp-action="Edit" asp-route-id="@Model.AnnouncementId" class="btn btn-warning text-dark fw-semibold rounded-3"><i class="bi bi-pencil me-1"></i> Baguhin / I-edit</a>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="app-card app-card--pad">
+            @if (hasImage)
+            {
+                <div class="rounded-3 overflow-hidden mb-4" style="max-height: 320px;">
+                    <img src="@imgSrc" alt="@Model.Title" class="w-100" style="object-fit: cover; max-height: 320px;" />
+                </div>
+            }
+
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <span class="badge bg-info-subtle text-info-emphasis rounded-pill">@(string.IsNullOrEmpty(Model.Category) ? "General" : Model.Category)</span>
+                @if (Model.IsPinned)
+                {
+                    <span class="badge bg-success-subtle text-success-emphasis rounded-pill"><i class="bi bi-pin-angle-fill me-1"></i>Pinned</span>
+                }
+                @if (isActive)
+                {
+                    <span class="badge bg-success-subtle text-success-emphasis rounded-pill"><i class="bi bi-broadcast me-1"></i>Active</span>
+                }
+                else
+                {
+                    <span class="badge bg-secondary-subtle text-secondary-emphasis rounded-pill"><i class="bi bi-hourglass-bottom me-1"></i>Expired</span>
+                }
             </div>
 
-            <p class="text-secondary style" style="white-space: pre-line; line-height: 1.6;">@Model.Content</p>
-        </div>
-        <div class="d-flex justify-content-between">
-            <a asp-action="Index" class="btn btn-sm btn-outline-secondary px-3"><i class="bi bi-arrow-left"></i> Back to List</a>
-            <a asp-action="Edit" asp-route-id="@Model.AnnouncementId" class="btn btn-sm btn-primary px-4"><i class="bi bi-pencil"></i> Edit Post</a>
+            <h2 class="fw-bold mb-3">@Model.Title</h2>
+
+            <div class="p-3 rounded-3" style="background: var(--surface-alt, #f8f9fa); white-space: pre-wrap; font-size: 1.05rem; line-height: 1.7; min-height: 150px;">@Model.Content</div>
         </div>
     </div>
-</body>
-</html>
+
+    <div class="col-lg-4">
+        <div class="app-card app-card--pad">
+            <h6 class="fw-bold text-uppercase text-muted small mb-3"><i class="bi bi-list-check me-1"></i> Metadata</h6>
+            <ul class="list-unstyled mb-0 small">
+                <li class="d-flex justify-content-between py-2 border-bottom">
+                    <span class="text-muted">Category</span>
+                    <span class="fw-semibold">@(string.IsNullOrEmpty(Model.Category) ? "General" : Model.Category)</span>
+                </li>
+                <li class="d-flex justify-content-between py-2 border-bottom">
+                    <span class="text-muted">Status</span>
+                    <span class="fw-semibold">@(isActive ? "Active" : "Expired")</span>
+                </li>
+                <li class="d-flex justify-content-between py-2 border-bottom">
+                    <span class="text-muted">Pinned</span>
+                    <span class="fw-semibold">@(Model.IsPinned ? "Yes" : "No")</span>
+                </li>
+                <li class="d-flex justify-content-between py-2 border-bottom">
+                    <span class="text-muted">Author</span>
+                    <span class="fw-semibold">@(string.IsNullOrEmpty(Model.AuthorName) ? "Staff Encoder" : Model.AuthorName)</span>
+                </li>
+                <li class="d-flex justify-content-between py-2 border-bottom">
+                    <span class="text-muted">Published</span>
+                    <span class="fw-semibold">@Model.DatePosted.ToString("MMM dd, yyyy h:mm tt")</span>
+                </li>
+                <li class="d-flex justify-content-between py-2">
+                    <span class="text-muted">Expires</span>
+                    <span class="fw-semibold">@(Model.ExpiryDate.HasValue ? Model.ExpiryDate.Value.ToString("MMM dd, yyyy h:mm tt") : "No expiration")</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
