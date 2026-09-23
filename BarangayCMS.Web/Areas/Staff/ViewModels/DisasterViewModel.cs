@@ -1,58 +1,56 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 
-namespace BarangayCMS.Areas.Staff.ViewModels
+namespace BarangayCMS.Web.Areas.Staff.Models
 {
     public class DisasterViewModel
     {
-        // Ginamit natin ang Id para sa @item.Id link sa Track button
         public int Id { get; set; }
 
-        // Mapped sa @item.IncidentName ng iyong View
-        [Required(ErrorMessage = "Ang Pangalan ng Sakuna / Insidente ay kinakailangan.")]
-        [MaxLength(150, ErrorMessage = "Hindi pwedeng lumampas sa 150 karakter.")]
-        [Display(Name = "Incident / Calamity Name")]
-        public string IncidentName { get; set; } = string.Empty;
-
-        // Mapped sa @item.DisasterType
-        [Required(ErrorMessage = "Ang Uri ng Sakuna (Disaster Type) ay kinakailangan.")]
-        [MaxLength(100, ErrorMessage = "Hindi pwedeng lumampas sa 100 karakter.")]
-        [Display(Name = "Disaster / Incident Type")]
+        [Required(ErrorMessage = "Ang uri ng kalamidad ay kinakailangan.")]
+        [MaxLength(100, ErrorMessage = "Hindi pwedeng lumagpas sa 100 characters.")]
+        [Display(Name = "Uri ng Kalamidad (Disaster Type)")]
         public string DisasterType { get; set; } = string.Empty;
 
-        [MaxLength(500, ErrorMessage = "Hindi pwedeng lumampas sa 500 karakter.")]
-        [Display(Name = "Situation Description")]
+        [MaxLength(500, ErrorMessage = "Hindi pwedeng lumagpas sa 500 characters.")]
+        [Display(Name = "Deskripsyon / Detalye")]
         public string Description { get; set; } = string.Empty;
 
-        [MaxLength(150, ErrorMessage = "Hindi pwedeng lumampas sa 150 karakter.")]
-        [Display(Name = "Affected Location / Area")]
+        [MaxLength(150, ErrorMessage = "Hindi pwedeng lumagpas sa 150 characters.")]
+        [Display(Name = "Apektadong Lugar / Lokasyon")]
         public string Location { get; set; } = string.Empty;
 
-        // Mapped sa @item.OccurrenceDate.ToString(...)
-        [Required(ErrorMessage = "Ang Petsa at Oras ay kinakailangan.")]
-        [Display(Name = "Date and Time Occurred")]
-        public DateTime OccurrenceDate { get; set; } = DateTime.Now;
-
-        // Mapped sa @item.AffectedHouseholdsCount
-        [Display(Name = "Affected Households")]
-        public int AffectedHouseholdsCount { get; set; } = 0;
-
-        // Mapped sa @item.DisplacedIndividualsCount
-        [Display(Name = "Displaced Individuals (Pax)")]
-        public int DisplacedIndividualsCount { get; set; } = 0;
-
-        // Mapped sa @item.EvacuationCenterStatus ("Open" / "Closed")
-        [MaxLength(50)]
-        [Display(Name = "Evacuation Center Status")]
-        public string EvacuationCenterStatus { get; set; } = "Closed";
-
-        // Mapped sa @item.ReliefDistributionStatus ("Completed" / "Ongoing")
-        [MaxLength(50)]
-        [Display(Name = "Relief Distribution Status")]
-        public string ReliefDistributionStatus { get; set; } = "Ongoing";
+        [Required(ErrorMessage = "Ang petsa at oras ay kinakailangan.")]
+        [DataType(DataType.DateTime)]
+        [Display(Name = "Petsa at Oras ng Pangyayari")]
+        public DateTime DateOccurred { get; set; } = DateTime.Now;
 
         [Required]
         [MaxLength(30)]
-        public string Status { get; set; } = "Active";
+        [Display(Name = "Status ng Sitwasyon")]
+        public string Status { get; set; } = "Active"; // Active, Controlled, Resolved, Cleared
+    }
+
+    // ⬇️ IDAGDAG ITONG DALAWANG CLASS SA BABA ⬇️
+    public class ResidentSmsOption
+    {
+        public int Id { get; set; }
+        public string FullName { get; set; } = string.Empty;
+        public string Purok { get; set; } = string.Empty;
+        public string ContactNumber { get; set; } = string.Empty;
+    }
+
+    public class SmsAlertHistoryItem
+    {
+        public int Id { get; set; }
+        public DateTime SentAt { get; set; } = DateTime.Now;
+        public string EmergencyType { get; set; } = string.Empty;
+        public string Message { get; set; } = string.Empty;
+        public string RecipientGroup { get; set; } = string.Empty;
+        public int RecipientCount { get; set; }
+        public int SuccessCount { get; set; }
+        public int FailedCount { get; set; }
+        public string Status { get; set; } = "Sent";
+        public string SentBy { get; set; } = "Staff";
     }
 }

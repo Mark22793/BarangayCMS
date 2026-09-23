@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace BarangayCMS.Web.Areas.Staff.ViewModels
@@ -9,7 +10,6 @@ namespace BarangayCMS.Web.Areas.Staff.ViewModels
     {
         public int ComplaintId { get; set; }
 
-        // Primary Key Alias
         public int Id
         {
             get => ComplaintId;
@@ -19,43 +19,34 @@ namespace BarangayCMS.Web.Areas.Staff.ViewModels
         [Display(Name = "Complainant Resident")]
         public int? ResidentId { get; set; }
 
-        [Required(ErrorMessage = "Ang pangalan ng Complainant ay kailangan.")]
         [Display(Name = "Complainant Name")]
-        public string ComplainantName { get; set; } = string.Empty;
+        public string? ComplainantName { get; set; }
 
-        // Alias para sa ResidentFullName na hinahanap ng Controller
         public string ResidentFullName
         {
-            get => string.IsNullOrEmpty(ComplainantName) ? "Unknown Resident" : ComplainantName;
+            get => string.IsNullOrEmpty(ComplainantName) ? "Walk-in Resident" : ComplainantName;
             set => ComplainantName = value;
         }
 
-        [Required(ErrorMessage = "Ang pangalan ng Respondent ay kailangan.")]
         [Display(Name = "Respondent / Inirereklamo")]
-        public string RespondentName { get; set; } = string.Empty;
+        public string? RespondentName { get; set; }
 
-        [Required(ErrorMessage = "Ilarawan ang reklamo o insidente.")]
+        [Display(Name = "Subject / Case Matter")]
+        public string Subject { get; set; } = string.Empty;
+
         [Display(Name = "Complaint Details / Description")]
-        public string Details { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
 
-        // Alias para sa Subject / Description na hinahanap ng Controller
-        public string Subject
+        public string Details
         {
-            get => Details;
-            set => Details = value;
-        }
-
-        public string Description
-        {
-            get => Details;
-            set => Details = value;
+            get => Description;
+            set => Description = value;
         }
 
         [Display(Name = "Incident Date & Time")]
         [DataType(DataType.DateTime)]
         public DateTime IncidentDate { get; set; } = DateTime.Now;
 
-        // Alias para sa DateSubmitted na hinahanap ng Controller
         public DateTime DateSubmitted
         {
             get => IncidentDate;
@@ -66,12 +57,12 @@ namespace BarangayCMS.Web.Areas.Staff.ViewModels
         public string Status { get; set; } = "Pending";
 
         [Display(Name = "Assigned Officer")]
-        public string AssignedOfficer { get; set; } = string.Empty;
+        public string? AssignedOfficer { get; set; }
 
         [Display(Name = "Resolution Notes")]
-        public string ActionTaken { get; set; } = string.Empty;
+        public string? ActionTaken { get; set; }
 
-        // Dropdown Lists para sa Create at Edit Views
+        [BindNever]
         public IEnumerable<SelectListItem>? ResidentList { get; set; }
     }
 }

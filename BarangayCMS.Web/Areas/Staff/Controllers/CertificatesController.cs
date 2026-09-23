@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 namespace BarangayCMS.Web.Areas.Staff.Controllers
 {
     [Area("Staff")]
+    [Route("Staff/[controller]")]
     public class CertificatesController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -20,7 +21,9 @@ namespace BarangayCMS.Web.Areas.Staff.Controllers
             _context = context;
         }
 
-        // GET: Staff/Certificates
+        // GET: Staff/Certificates o Staff/Certificates/Index
+        [HttpGet]
+        [HttpGet("Index")]
         public async Task<IActionResult> Index()
         {
             var certificates = await _context.Set<Certificate>()
@@ -49,7 +52,26 @@ namespace BarangayCMS.Web.Areas.Staff.Controllers
             return View(certificates);
         }
 
+        // 📌 INIDAGDAG: GET & POST para sa Approve (Resolves 404 Error: /Staff/Certificates/Approve/10)
+        [HttpGet("Approve/{id:int}")]
+        [HttpPost("Approve/{id:int}")]
+        public async Task<IActionResult> Approve(int id)
+        {
+            var cert = await _context.Set<Certificate>().FindAsync(id);
+            if (cert == null) return NotFound();
+
+            cert.Status = "Approved";
+            cert.DateIssued = DateTime.Now;
+            cert.IssuedBy = User.Identity?.Name ?? "Barangay Staff";
+
+            _context.Set<Certificate>().Update(cert);
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction(nameof(Index));
+        }
+
         // GET: Staff/Certificates/Create
+        [HttpGet("Create")]
         public async Task<IActionResult> Create()
         {
             await PopulateResidentsDropDownList();
@@ -57,7 +79,7 @@ namespace BarangayCMS.Web.Areas.Staff.Controllers
         }
 
         // POST: Staff/Certificates/Create
-        [HttpPost]
+        [HttpPost("Create")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CertificateViewModel model)
         {
@@ -96,6 +118,7 @@ namespace BarangayCMS.Web.Areas.Staff.Controllers
         }
 
         // GET: Staff/Certificates/Edit/5
+        [HttpGet("Edit/{id:int}")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
@@ -124,7 +147,7 @@ namespace BarangayCMS.Web.Areas.Staff.Controllers
         }
 
         // POST: Staff/Certificates/Edit/5
-        [HttpPost]
+        [HttpPost("Edit/{id:int}")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, CertificateViewModel model)
         {
@@ -167,6 +190,7 @@ namespace BarangayCMS.Web.Areas.Staff.Controllers
         }
 
         // GET: Staff/Certificates/Details/5
+        [HttpGet("Details/{id:int}")]
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();
@@ -193,7 +217,8 @@ namespace BarangayCMS.Web.Areas.Staff.Controllers
             return View(model);
         }
 
-        // 📌 INIDAGDAG: GET: Staff/Certificates/Delete/5
+        // GET: Staff/Certificates/Delete/5
+        [HttpGet("Delete/{id:int}")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null) return NotFound();
@@ -217,8 +242,8 @@ namespace BarangayCMS.Web.Areas.Staff.Controllers
             return View(model);
         }
 
-        // 📌 INIDAGDAG: POST: Staff/Certificates/Delete/5
-        [HttpPost, ActionName("Delete")]
+        // POST: Staff/Certificates/Delete/5
+        [HttpPost("Delete/{id:int}"), ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
@@ -231,7 +256,8 @@ namespace BarangayCMS.Web.Areas.Staff.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // 📌 INIDAGDAG: GET: Staff/Certificates/Print/5
+        // GET: Staff/Certificates/Print/5
+        [HttpGet("Print/{id:int}")]
         public async Task<IActionResult> Print(int? id)
         {
             if (id == null) return NotFound();

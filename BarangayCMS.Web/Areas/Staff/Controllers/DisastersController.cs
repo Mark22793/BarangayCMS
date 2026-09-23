@@ -1,19 +1,22 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using BarangayCMS.Areas.Staff.ViewModels;
-using BarangayCMS.BLL.Interfaces;
-using BarangayCMS.DAL.Context;
-using BarangayCMS.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using BarangayCMS.BLL.Interfaces;
+using BarangayCMS.DAL.Context;
+using BarangayCMS.Entities;
+// 🔥 Alias para maiwasan ang Ambiguous Reference CS0104 error
+using StaffDisasterVM = BarangayCMS.Web.Areas.Staff.Models.DisasterViewModel;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace BarangayCMS.Areas.Staff.Controllers
 {
     [Area("Staff")]
     [Route("Staff/[controller]")]
     [Route("Staff/Disaster")]
+    [Authorize(Roles = "Staff,Admin,SuperAdmin")]
     public class DisastersController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -33,30 +36,54 @@ namespace BarangayCMS.Areas.Staff.Controllers
         public async Task<IActionResult> Index()
         {
             var disasters = await _context.Disasters
+                .AsNoTracking()
                 .OrderByDescending(d => d.OccurrenceDate)
                 .ToListAsync();
-
-            ViewBag.Evacuation = await _evacuationService.GetPublicEvacuationInfoAsync();
 
             var list = disasters.Select(MapToViewModel).ToList();
             return View(list);
         }
 
+        // GET: /Staff/Disasters/HazardMaps
+        [HttpGet("HazardMaps")]
+        public IActionResult HazardMaps()
+        {
+            return View();
+        }
+
+        // GET: /Staff/Disasters/EvacuationCenters
+        [HttpGet("EvacuationCenters")]
+        public async Task<IActionResult> EvacuationCenters()
+        {
+            var evacuationInfo = await _evacuationService.GetPublicEvacuationInfoAsync();
+            // 🔑 INAYOS: Explicitly na itinuro sa "EvacuationCenter.cshtml" (nang walang 's')
+            return View("EvacuationCenter", evacuationInfo);
+        }
+
+        // GET: /Staff/Disasters/SmsHistory
+        [HttpGet("SmsHistory")]
+        public IActionResult SmsHistory()
+        {
+            return View();
+        }
+
         // GET: /Staff/Disasters/Manage/5
-        [HttpGet("Manage/{id}")]
+        [HttpGet("Manage/{id:int}")]
         public async Task<IActionResult> Manage(int id)
         {
-            var item = await _context.Disasters.FindAsync(id);
+            var item = await _context.Disasters.AsNoTracking().FirstOrDefaultAsync(d => d.DisasterId == id);
             if (item == null) return NotFound();
+
             return View(MapToViewModel(item));
         }
 
         // GET: /Staff/Disasters/Details/5
-        [HttpGet("Details/{id}")]
+        [HttpGet("Details/{id:int}")]
         public async Task<IActionResult> Details(int id)
         {
-            var item = await _context.Disasters.FindAsync(id);
+            var item = await _context.Disasters.AsNoTracking().FirstOrDefaultAsync(d => d.DisasterId == id);
             if (item == null) return NotFound();
+
             return View(MapToViewModel(item));
         }
 
@@ -64,84 +91,80 @@ namespace BarangayCMS.Areas.Staff.Controllers
         [HttpGet("Create")]
         public IActionResult Create()
         {
-            return View(new DisasterViewModel { OccurrenceDate = DateTime.Now });
+            return View(new StaffDisasterVM { DateOccurred = DateTime.Now });
         }
 
         // POST: /Staff/Disasters/Create
         [HttpPost("Create")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(DisasterViewModel model)
+        public async Task<IActionResult> Create(StaffDisasterVM model)
         {
-            if (ModelState.IsValid)
-            {
-                var disaster = new Disaster
-                {
-                    IncidentName = EncodeIncidentName(model),
-                    DisasterType = model.DisasterType,
-                    OccurrenceDate = model.OccurrenceDate,
-                    AffectedHouseholdsCount = model.AffectedHouseholdsCount,
-                    DisplacedIndividualsCount = model.DisplacedIndividualsCount,
-                    CasualtiesCount = 0,
-                    EvacuationCenterStatus = string.IsNullOrWhiteSpace(model.EvacuationCenterStatus) ? "Closed" : model.EvacuationCenterStatus,
-                    ReliefDistributionStatus = string.IsNullOrWhiteSpace(model.ReliefDistributionStatus) ? "Ongoing" : model.ReliefDistributionStatus,
-                    LoggedBy = User.Identity?.Name ?? "Staff",
-                    DateCreated = DateTime.Now
-                };
+            if (!ModelState.IsValid) return View(model);
 
-                _context.Disasters.Add(disaster);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            return View(model);
+            var disaster = new Disaster
+            {
+                IncidentName = EncodeIncidentName(model),
+                DisasterType = model.DisasterType,
+                OccurrenceDate = model.DateOccurred,
+                AffectedHouseholdsCount = 0,
+                DisplacedIndividualsCount = 0,
+                CasualtiesCount = 0,
+                EvacuationCenterStatus = string.Equals(model.Status, "Active", StringComparison.OrdinalIgnoreCase) ? "Open" : "Closed",
+                ReliefDistributionStatus = string.Equals(model.Status, "Active", StringComparison.OrdinalIgnoreCase) ? "Ongoing" : "Completed",
+                LoggedBy = User.Identity?.Name ?? "Staff",
+                DateCreated = DateTime.Now
+            };
+
+            _context.Disasters.Add(disaster);
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
         }
 
         // GET: /Staff/Disasters/Edit/5
-        [HttpGet("Edit/{id}")]
+        [HttpGet("Edit/{id:int}")]
         public async Task<IActionResult> Edit(int id)
         {
             var item = await _context.Disasters.FindAsync(id);
             if (item == null) return NotFound();
+
             return View(MapToViewModel(item));
         }
 
         // POST: /Staff/Disasters/Edit/5
-        [HttpPost("Edit/{id?}")]
+        [HttpPost("Edit/{id:int}")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, DisasterViewModel model)
+        public async Task<IActionResult> Edit(int id, StaffDisasterVM model)
         {
-            if (ModelState.IsValid)
-            {
-                var existing = await _context.Disasters.FindAsync(id);
-                if (existing == null) return NotFound();
+            if (!ModelState.IsValid) return View(model);
 
-                existing.IncidentName = EncodeIncidentName(model);
-                existing.DisasterType = model.DisasterType;
-                existing.OccurrenceDate = model.OccurrenceDate;
-                existing.AffectedHouseholdsCount = model.AffectedHouseholdsCount;
-                existing.DisplacedIndividualsCount = model.DisplacedIndividualsCount;
-                existing.EvacuationCenterStatus = string.IsNullOrWhiteSpace(model.EvacuationCenterStatus) ? "Closed" : model.EvacuationCenterStatus;
-                existing.ReliefDistributionStatus = string.IsNullOrWhiteSpace(model.ReliefDistributionStatus) ? "Ongoing" : model.ReliefDistributionStatus;
-                existing.LoggedBy = User.Identity?.Name ?? "Staff";
-                existing.DateUpdated = DateTime.Now;
+            var existing = await _context.Disasters.FindAsync(id);
+            if (existing == null) return NotFound();
 
-                _context.Disasters.Update(existing);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            return View(model);
+            existing.IncidentName = EncodeIncidentName(model);
+            existing.DisasterType = model.DisasterType;
+            existing.OccurrenceDate = model.DateOccurred;
+            existing.EvacuationCenterStatus = string.Equals(model.Status, "Active", StringComparison.OrdinalIgnoreCase) ? "Open" : "Closed";
+            existing.ReliefDistributionStatus = string.Equals(model.Status, "Active", StringComparison.OrdinalIgnoreCase) ? "Ongoing" : "Completed";
+            existing.LoggedBy = User.Identity?.Name ?? "Staff";
+            existing.DateUpdated = DateTime.Now;
+
+            _context.Disasters.Update(existing);
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
         }
 
         // GET: /Staff/Disasters/Delete/5
-        [HttpGet("Delete/{id}")]
+        [HttpGet("Delete/{id:int}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var item = await _context.Disasters.FindAsync(id);
+            var item = await _context.Disasters.AsNoTracking().FirstOrDefaultAsync(d => d.DisasterId == id);
             if (item == null) return NotFound();
+
             return View(MapToViewModel(item));
         }
 
         // POST: /Staff/Disasters/Delete/5
-        [HttpPost("Delete/{id?}"), ActionName("Delete")]
+        [HttpPost("Delete/{id:int}"), ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
@@ -154,7 +177,9 @@ namespace BarangayCMS.Areas.Staff.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        private static DisasterViewModel MapToViewModel(Disaster d)
+        #region 🛠 Mapping Helpers
+
+        private static StaffDisasterVM MapToViewModel(Disaster d)
         {
             var description = d.IncidentName;
             var location = "Barangay Jurisdiction";
@@ -169,26 +194,21 @@ namespace BarangayCMS.Areas.Staff.Controllers
             var isActive = string.Equals(d.EvacuationCenterStatus, "Open", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(d.ReliefDistributionStatus, "Ongoing", StringComparison.OrdinalIgnoreCase);
 
-            return new DisasterViewModel
+            return new StaffDisasterVM
             {
                 Id = d.DisasterId,
-                IncidentName = description,
-                DisasterType = d.DisasterType,
-                Description = description,
-                Location = location,
-                OccurrenceDate = d.OccurrenceDate,
-                AffectedHouseholdsCount = d.AffectedHouseholdsCount,
-                DisplacedIndividualsCount = d.DisplacedIndividualsCount,
-                EvacuationCenterStatus = d.EvacuationCenterStatus,
-                ReliefDistributionStatus = d.ReliefDistributionStatus,
+                DisasterType = d.DisasterType ?? string.Empty,
+                Description = description ?? string.Empty,
+                Location = location ?? string.Empty,
+                DateOccurred = d.OccurrenceDate,
                 Status = isActive ? "Active" : "Resolved"
             };
         }
 
-        private static string EncodeIncidentName(DisasterViewModel model)
+        private static string EncodeIncidentName(StaffDisasterVM model)
         {
-            var name = !string.IsNullOrWhiteSpace(model.IncidentName)
-                ? model.IncidentName
+            var name = !string.IsNullOrWhiteSpace(model.Description)
+                ? model.Description
                 : $"{model.DisasterType} Incident";
 
             if (!string.IsNullOrWhiteSpace(model.Location))
@@ -197,5 +217,7 @@ namespace BarangayCMS.Areas.Staff.Controllers
             }
             return name;
         }
+
+        #endregion
     }
 }

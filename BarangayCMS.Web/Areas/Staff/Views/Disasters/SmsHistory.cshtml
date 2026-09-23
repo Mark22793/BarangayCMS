@@ -1,0 +1,96 @@
+﻿@using BarangayCMS.Web.Areas.Staff.Models
+@model IEnumerable<SmsAlertHistoryItem>
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+@{
+    Layout = "~/Areas/Staff/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "SMS Alert History";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold text-dark mb-1">
+            <i class="bi bi-clock-history text-secondary me-2"></i>SMS Alert History
+        </h2>
+        <p class="text-muted small mb-0">Kumpletong tala ng lahat ng naipadalang Emergency SMS alerts ng barangay staff.</p>
+    </div>
+    <a asp-area="Admin" asp-controller="Disaster" asp-action="Index" class="btn btn-outline-secondary fw-semibold">
+        <i class="bi bi-arrow-left me-1"></i> Back to Disaster Risk Management
+    </a>
+</div>
+
+<div class="card border-0 shadow-sm rounded p-4">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Date &amp; Time Sent</th>
+                    <th>Emergency Type</th>
+                    <th>Message</th>
+                    <th>Recipient Group</th>
+                    <th class="text-center">No. of Recipients</th>
+                    <th class="text-center">Status</th>
+                    <th>Sent By</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Any())
+                {
+                    @foreach (var h in Model)
+                    {
+                        <tr>
+                            <td>
+                                <i class="bi bi-calendar-event me-1 text-muted"></i>
+                                @h.SentAt.ToString("MM/dd/yyyy h:mm tt")
+                            </td>
+                            <td>
+                                <span class="fw-semibold text-dark">@h.EmergencyType</span>
+                            </td>
+                            <td>
+                                <small class="text-muted text-truncate d-inline-block" style="max-width: 300px;" title="@h.Message">
+                                    @h.Message
+                                </small>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border">@h.RecipientGroup</span>
+                            </td>
+                            <td class="text-center">
+                                <span class="fw-bold">@h.RecipientCount</span>
+                                @if (h.FailedCount > 0)
+                                {
+                                    <br /><small class="text-muted" style="font-size: 0.75rem;">(@h.SuccessCount ok / @h.FailedCount failed)</small>
+                                }
+                            </td>
+                            <td class="text-center">
+                                @if (h.Status == "Sent")
+                                {
+                                    <span class="badge bg-success">Sent</span>
+                                }
+                                else if (h.Status == "Partial")
+                                {
+                                    <span class="badge bg-warning text-dark">Partial</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">Failed</span>
+                                }
+                            </td>
+                            <td>
+                                <i class="bi bi-person-circle me-1 text-secondary"></i>@h.SentBy
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="7" class="text-center py-5 text-muted">
+                            <i class="bi bi-inbox display-6 d-block mb-2 text-secondary"></i>
+                            <span>Wala pang naipadalang emergency SMS alert sa kasalukuyan.</span>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

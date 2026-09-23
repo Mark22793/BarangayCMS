@@ -1,0 +1,71 @@
+﻿@{
+    Layout = "~/Areas/Staff/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Hazard Maps & Guidelines";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold text-dark mb-1">
+            <i class="bi bi-map-fill text-danger me-2"></i>Hazard Maps & Guidelines
+        </h2>
+        <p class="text-muted small mb-0">Talaan ng mga hazard zones, high-risk areas, at mga pampublikong gabay sa panahon ng kalamidad.</p>
+    </div>
+    <a asp-area="Admin" asp-controller="Disaster" asp-action="Index" class="btn btn-outline-secondary fw-semibold">
+        <i class="bi bi-arrow-left me-1"></i> Bumalik
+    </a>
+</div>
+
+<div class="row g-4">
+    <!-- Hazard Alerts & Information Column -->
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm rounded mb-4">
+            <div class="card-header bg-danger text-white fw-bold py-3">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i> High-Risk Zones & Paalala
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning border-warning-subtle shadow-sm mb-3">
+                    <h6 class="fw-bold text-dark mb-2">
+                        <i class="bi bi-water text-primary me-1"></i> Critical Flood Level Areas
+                    </h6>
+                    <ul class="mb-0 ps-3 small text-secondary">
+                        <li><strong>Purok 4 (Tabing Ilog)</strong> - Madaling bahain tuwing may malakas na bagyo o high tide.</li>
+                        <li><strong>Purok 2 (Mababang Daan)</strong> - Posibleng magkaroon ng flash flood.</li>
+                    </ul>
+                </div>
+
+                <div class="alert alert-danger border-danger-subtle shadow-sm mb-0">
+                    <h6 class="fw-bold text-dark mb-2">
+                        <i class="bi bi-geo-fill text-danger me-1"></i> Landslide & Erosion Prone Areas
+                    </h6>
+                    <ul class="mb-0 ps-3 small text-secondary">
+                        <li><strong>Sitio Maligaya</strong> - High-Risk area para sa soil erosion at landslide tuwing tuloy-tuloy ang ulan.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded p-3">
+            <h6 class="fw-bold text-dark mb-2"><i class="bi bi-telephone-fill text-success me-2"></i>Barangay Emergency Hotline</h6>
+            <p class="small text-muted mb-0">Staff/Duty Desk: <strong>(02) 8123-4567 / 0917-123-4567</strong></p>
+        </div>
+    </div>
+
+    <!-- Interactive Map / Map Embed Column -->
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm rounded p-4 h-100 min-vh-50">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold text-dark mb-0"><i class="bi bi-compass me-2 text-primary"></i>Barangay Hazard Grid View</h5>
+                <span class="badge bg-secondary-subtle text-dark">Staff Reference Map</span>
+            </div>
+
+            <!-- Placeholder Screen for Map Embed -->
+            <div class="bg-light border rounded d-flex flex-column align-items-center justify-content-center p-5 text-center flex-grow-1" style="min-height: 350px;">
+                <i class="bi bi-file-earmark-image display-4 text-secondary mb-3"></i>
+                <h6 class="fw-bold text-dark mb-1">Interactive Hazard Map Container</h6>
+                <p class="text-muted small max-w-md mb-0">
+                    Dito pwedeng ilagay o i-embed ang isang Google Maps iframe, interactive GIS hazard layer, o public emergency guidelines document ng Barangay.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>

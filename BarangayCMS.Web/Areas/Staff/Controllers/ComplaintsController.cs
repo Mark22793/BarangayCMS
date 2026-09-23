@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using BarangayCMS.BLL.Interfaces;
 using BarangayCMS.DTO;
-// 🔑 INAYOS: Tamang namespace ng ViewModels
 using BarangayCMS.Web.Areas.Staff.ViewModels;
 
 namespace BarangayCMS.Web.Areas.Staff.Controllers
@@ -27,14 +26,17 @@ namespace BarangayCMS.Web.Areas.Staff.Controllers
         {
             var dtoList = await _complaintService.GetAllComplaintsAsync();
 
-            var viewModelList = dtoList.Select(c => new ComplaintViewModel
+            // 🔍 FILTRATION: Itago ang mga record na "Dismissed" o "Deleted" na para mawala sa listahan
+            var activeComplaints = dtoList.Where(c => c.Status != "Dismissed" && c.Status != "Deleted");
+
+            var viewModelList = activeComplaints.Select(c => new ComplaintViewModel
             {
-                Id = c.Id,
-                ResidentId = c.ComplainantResidentId ?? 0,
-                ResidentFullName = string.IsNullOrEmpty(c.ComplainantName) ? "Walk-in Resident" : c.ComplainantName,
+                ComplaintId = c.Id,
+                ResidentId = c.ComplainantResidentId,
+                ComplainantName = string.IsNullOrEmpty(c.ComplainantName) ? "Walk-in Resident" : c.ComplainantName,
                 Subject = string.IsNullOrEmpty(c.CaseNumber) ? $"CMP-{c.Id}" : c.CaseNumber,
                 Description = c.Details,
-                DateSubmitted = c.CreatedDate,
+                IncidentDate = c.CreatedDate,
                 Status = c.Status ?? "Pending"
             }).ToList();
 
@@ -49,12 +51,12 @@ namespace BarangayCMS.Web.Areas.Staff.Controllers
 
             var viewModel = new ComplaintViewModel
             {
-                Id = c.Id,
-                ResidentId = c.ComplainantResidentId ?? 0,
-                ResidentFullName = string.IsNullOrEmpty(c.ComplainantName) ? "Walk-in Resident" : c.ComplainantName,
+                ComplaintId = c.Id,
+                ResidentId = c.ComplainantResidentId,
+                ComplainantName = string.IsNullOrEmpty(c.ComplainantName) ? "Walk-in Resident" : c.ComplainantName,
                 Subject = string.IsNullOrEmpty(c.CaseNumber) ? $"CMP-{c.Id}" : c.CaseNumber,
                 Description = c.Details,
-                DateSubmitted = c.CreatedDate,
+                IncidentDate = c.CreatedDate,
                 Status = c.Status ?? "Pending"
             };
 
@@ -66,8 +68,8 @@ namespace BarangayCMS.Web.Areas.Staff.Controllers
         {
             var model = new ComplaintViewModel
             {
-                DateSubmitted = DateTime.Now,
-                Status = "Pending"
+                IncidentDate = DateTime.Now,
+                Status = "Pending Audit"
             };
 
             await PopulateResidentsDropDownList(model);
@@ -79,38 +81,36 @@ namespace BarangayCMS.Web.Areas.Staff.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(ComplaintViewModel model)
         {
-            if (ModelState.IsValid)
+            ModelState.ClearValidationState(nameof(ComplaintViewModel));
+
+            string complainantName = "Walk-in Resident";
+            if (model.ResidentId.HasValue && model.ResidentId.Value > 0)
             {
-                string complainantName = model.ResidentFullName ?? "";
-                if (model.ResidentId > 0)
+                var residents = await _residentService.GetAllResidentsAsync();
+                var resident = residents.FirstOrDefault(r => r.Id == model.ResidentId.Value);
+                if (resident != null)
                 {
-                    var residents = await _residentService.GetAllResidentsAsync();
-                    var resident = residents.FirstOrDefault(r => r.Id == model.ResidentId);
-                    if (resident != null)
-                    {
-                        complainantName = $"{resident.LastName}, {resident.FirstName}";
-                    }
+                    complainantName = $"{resident.LastName}, {resident.FirstName}";
                 }
-
-                var dto = new ComplaintDTO
-                {
-                    CaseNumber = string.IsNullOrEmpty(model.Subject)
-                        ? $"BLOTTER-{DateTime.Now:yyyy}-{Guid.NewGuid().ToString().Substring(0, 4).ToUpper()}"
-                        : model.Subject,
-                    ComplainantResidentId = model.ResidentId > 0 ? model.ResidentId : null,
-                    ComplainantName = complainantName,
-                    Details = model.Description ?? string.Empty,
-                    IncidentDate = model.DateSubmitted != default ? model.DateSubmitted : DateTime.Now,
-                    CreatedDate = DateTime.Now,
-                    Status = model.Status ?? "Pending"
-                };
-
-                bool isSaved = await _complaintService.FileComplaintAsync(dto);
-                if (isSaved) return RedirectToAction(nameof(Index));
-
-                ModelState.AddModelError(string.Empty, "Hindi mai-save ang reklamo sa database.");
             }
 
+            var dto = new ComplaintDTO
+            {
+                CaseNumber = string.IsNullOrWhiteSpace(model.Subject)
+                    ? $"BLOTTER-{DateTime.Now:yyyy}-{Guid.NewGuid().ToString().Substring(0, 4).ToUpper()}"
+                    : model.Subject,
+                ComplainantResidentId = (model.ResidentId.HasValue && model.ResidentId.Value > 0) ? model.ResidentId : null,
+                ComplainantName = complainantName,
+                Details = model.Description ?? string.Empty,
+                IncidentDate = model.IncidentDate != default ? model.IncidentDate : DateTime.Now,
+                CreatedDate = DateTime.Now,
+                Status = model.Status ?? "Pending Audit"
+            };
+
+            bool isSaved = await _complaintService.FileComplaintAsync(dto);
+            if (isSaved) return RedirectToAction(nameof(Index));
+
+            ModelState.AddModelError(string.Empty, "Hindi mai-save ang reklamo sa database.");
             await PopulateResidentsDropDownList(model);
             return View(model);
         }
@@ -123,12 +123,12 @@ namespace BarangayCMS.Web.Areas.Staff.Controllers
 
             var viewModel = new ComplaintViewModel
             {
-                Id = c.Id,
-                ResidentId = c.ComplainantResidentId ?? 0,
-                ResidentFullName = c.ComplainantName,
+                ComplaintId = c.Id,
+                ResidentId = c.ComplainantResidentId,
+                ComplainantName = c.ComplainantName,
                 Subject = c.CaseNumber,
                 Description = c.Details,
-                DateSubmitted = c.IncidentDate != default ? c.IncidentDate : c.CreatedDate,
+                IncidentDate = c.IncidentDate != default ? c.IncidentDate : c.CreatedDate,
                 Status = c.Status
             };
 
@@ -141,111 +141,52 @@ namespace BarangayCMS.Web.Areas.Staff.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(ComplaintViewModel model)
         {
-            ModelState.Remove("ResidentFullName");
+            ModelState.ClearValidationState(nameof(ComplaintViewModel));
 
-            if (ModelState.IsValid)
-            {
-                bool isUpdated = await _complaintService.UpdateComplaintStatusAsync(model.Id, model.Status, model.Description ?? "Updated by Staff");
-                if (isUpdated) return RedirectToAction(nameof(Index));
+            bool isUpdated = await _complaintService.UpdateComplaintStatusAsync(
+                model.Id,
+                model.Status ?? "Pending",
+                model.Description ?? "Updated by Staff"
+            );
 
-                ModelState.AddModelError(string.Empty, "Failed to update complaint record.");
-            }
+            if (isUpdated) return RedirectToAction(nameof(Index));
 
+            ModelState.AddModelError(string.Empty, "Failed to update complaint record.");
             await PopulateResidentsDropDownList(model);
             return View(model);
         }
 
-        // GET: /Staff/Complaints/Assign/5
-        public async Task<IActionResult> Assign(int id)
-        {
-            var c = await _complaintService.GetComplaintByIdAsync(id);
-            if (c == null) return NotFound();
-
-            var viewModel = new ComplaintViewModel
-            {
-                Id = c.Id,
-                ResidentFullName = c.ComplainantName,
-                Subject = c.CaseNumber,
-                Status = c.Status
-            };
-
-            return View(viewModel);
-        }
-
-        // POST: /Staff/Complaints/Assign
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Assign(int id, string designation)
-        {
-            bool isUpdated = await _complaintService.UpdateComplaintStatusAsync(id, "Assigned", $"Dispatched to {designation}");
-            if (isUpdated) return RedirectToAction(nameof(Index));
-
-            return RedirectToAction(nameof(Index));
-        }
-
-        // GET: /Staff/Complaints/UpdateStatus/5
-        public async Task<IActionResult> UpdateStatus(int id)
-        {
-            var c = await _complaintService.GetComplaintByIdAsync(id);
-            if (c == null) return NotFound();
-
-            var viewModel = new ComplaintViewModel
-            {
-                Id = c.Id,
-                Subject = c.CaseNumber,
-                Status = c.Status
-            };
-
-            return View(viewModel);
-        }
-
-        // POST: /Staff/Complaints/UpdateStatus/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> UpdateStatus(ComplaintViewModel model)
-        {
-            bool isUpdated = await _complaintService.UpdateComplaintStatusAsync(model.Id, model.Status, "Status transitioned by Staff");
-            if (isUpdated) return RedirectToAction(nameof(Details), new { id = model.Id });
-
-            return View(model);
-        }
-
-        // GET: /Staff/Complaints/Delete/5
-        public async Task<IActionResult> Delete(int id)
-        {
-            var c = await _complaintService.GetComplaintByIdAsync(id);
-            if (c == null) return NotFound();
-
-            var viewModel = new ComplaintViewModel
-            {
-                Id = c.Id,
-                ResidentFullName = c.ComplainantName,
-                Subject = c.CaseNumber,
-                Status = c.Status
-            };
-
-            return View(viewModel);
-        }
-
-        // POST: /Staff/Complaints/Delete/5
+        // POST: /Staff/Complaints/Delete
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(ComplaintViewModel model)
         {
-            await _complaintService.UpdateComplaintStatusAsync(model.Id, "Dismissed", "Record Expunged / Dismissed by Staff");
+            int targetId = model.Id > 0 ? model.Id : model.ComplaintId;
+
+            if (targetId > 0)
+            {
+                // Baguhin ang status sa "Dismissed" para ma-filter out sa Index list
+                await _complaintService.UpdateComplaintStatusAsync(targetId, "Dismissed", "Record Expunged / Deleted by Staff");
+            }
+
             return RedirectToAction(nameof(Index));
         }
 
         // Helper Method
         private async Task PopulateResidentsDropDownList(ComplaintViewModel model)
         {
-            var residents = await _residentService.GetAllResidentsAsync();
-            var selectList = residents.Select(r => new {
-                Id = r.Id,
-                FullName = $"{r.LastName}, {r.FirstName} {r.MiddleName}".Trim()
-            });
+            var residents = await _residentService.GetAllResidentsAsync() ?? new System.Collections.Generic.List<ResidentDTO>();
 
-            ViewBag.ResidentsList = new SelectList(selectList, "Id", "FullName", model.ResidentId);
+            var selectList = residents.Select(r => new SelectListItem
+            {
+                Value = r.Id.ToString(),
+                Text = string.IsNullOrWhiteSpace(r.MiddleName)
+                    ? $"{r.LastName}, {r.FirstName}"
+                    : $"{r.LastName}, {r.FirstName} {r.MiddleName}",
+                Selected = model.ResidentId.HasValue && r.Id == model.ResidentId.Value
+            }).OrderBy(r => r.Text).ToList();
+
+            ViewBag.ResidentsList = new SelectList(selectList, "Value", "Text", model.ResidentId);
         }
     }
 }

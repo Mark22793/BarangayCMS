@@ -1,158 +1,603 @@
-﻿@using BarangayCMS.DTO
-@model IEnumerable<BarangayCMS.Areas.Staff.ViewModels.DisasterViewModel>
+﻿@using BarangayCMS.Web.Areas.Staff.Models
+@model IEnumerable<BarangayCMS.Web.Areas.Staff.Models.DisasterViewModel>
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 
 @{
     Layout = "~/Areas/Staff/Views/Shared/_Layout.cshtml";
-    ViewData["Title"] = "Disaster Risk & Emergency Response";
-    var evac = ViewBag.Evacuation as PublicEvacuationDTO;
-    var evacStatus = evac?.Status?.NormalizedStatus ?? "NORMAL";
-    string evacBadge = evacStatus == "ACTIVE" ? "bg-danger" : evacStatus == "PREPARED" ? "bg-warning text-dark" : "bg-success";
+    ViewData["Title"] = "Disaster Risk & Emergency Logs";
+
+    var isStaff = User.IsInRole("Staff") || User.IsInRole("Admin") || User.IsInRole("SuperAdmin");
+    var purokOptions = ViewBag.PurokOptions as List<string> ?? new List<string>();
+    var residentOptions = ViewBag.ResidentOptions as List<ResidentSmsOption> ?? new List<ResidentSmsOption>();
+    var smsHistory = ViewBag.SmsHistory as List<SmsAlertHistoryItem> ?? new List<SmsAlertHistoryItem>();
 }
 
+<!-- PAGE HEADER -->
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <small class="text-muted text-uppercase fw-bold">Safety</small>
-        <h2 class="fw-bold text-dark m-0"><i class="bi bi-shield-fill-exclamation text-primary me-2"></i>Disaster Risk & Evacuation</h2>
-        <p class="text-muted small mb-0">Monitor evacuation tracking, calamity supply distribution, and safety logs.</p>
+        <h2 class="fw-bold text-dark mb-1">
+            <i class="bi bi-shield-exclamation text-danger me-2"></i>Disaster Risk & Emergency Logs
+        </h2>
+        <p class="text-muted small mb-0">Monitor incident profiles, location statuses, and emergency responses for Barangay Staff.</p>
     </div>
-    <div>
-        <a asp-action="Create" class="btn btn-danger fw-semibold px-4 shadow-sm">
-            <i class="bi bi-shield-plus me-1"></i> Log Emergency Incident
+    <!-- 🔑 LAHAT NG BUTTONS DITO AY NAKA-ROUTED NA SA STAFF AREA -->
+    <div class="d-flex gap-2">
+        <a asp-area="Staff" asp-controller="Disasters" asp-action="HazardMaps" class="btn btn-outline-secondary shadow-sm fw-semibold">
+            <i class="bi bi-map me-1"></i> Hazard Maps & Guidelines
+        </a>
+        <a asp-area="Staff" asp-controller="Disasters" asp-action="EvacuationCenters" class="btn btn-outline-danger shadow-sm fw-semibold">
+            <i class="bi bi-house-door me-1"></i> Evacuation Centers
+        </a>
+        <a asp-area="Staff" asp-controller="Disasters" asp-action="Create" class="btn btn-danger shadow-sm fw-semibold">
+            <i class="bi bi-plus-lg me-1"></i> Log Emergency Incident
         </a>
     </div>
 </div>
 
-@* 🏫 EVACUATION SNAPSHOT (read-only) — mula sa Evacuation module na pinamamahalaan ng Admin *@
-@if (evac != null)
+<!-- 📱 TEMP DATA NOTIFICATIONS -->
+@if (TempData["SmsSuccess"] != null)
 {
-    <div class="card border-0 shadow-sm rounded-3 mb-4">
-        <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
-                <h5 class="fw-bold text-dark m-0"><i class="bi bi-house-door-fill text-danger me-2"></i>Evacuation Status</h5>
-                <div class="d-flex align-items-center gap-2">
-                    <span class="badge @evacBadge">@evacStatus</span>
-                    <a href="/Admin/Disaster/EvacuationCenters" class="btn btn-sm btn-outline-danger fw-semibold"><i class="bi bi-gear-fill me-1"></i>Manage</a>
-                </div>
-            </div>
-
-            @if (evac.ActiveCenters != null && evac.ActiveCenters.Any())
-            {
-                <div class="row g-2 mb-2">
-                    <div class="col-6 col-md-3"><div class="border rounded p-2 text-center"><div class="fw-bold text-dark">@evac.ActiveCenters.Count</div><div class="small text-muted">Active Centers</div></div></div>
-                    <div class="col-6 col-md-3"><div class="border rounded p-2 text-center"><div class="fw-bold text-dark">@evac.TotalCapacity</div><div class="small text-muted">Capacity</div></div></div>
-                    <div class="col-6 col-md-3"><div class="border rounded p-2 text-center"><div class="fw-bold text-warning">@evac.TotalOccupants</div><div class="small text-muted">Occupants</div></div></div>
-                    <div class="col-6 col-md-3"><div class="border rounded p-2 text-center"><div class="fw-bold text-success">@evac.TotalAvailableSlots</div><div class="small text-muted">Available</div></div></div>
-                </div>
-                <div class="table-responsive">
-                    <table class="table table-sm align-middle mb-0 small">
-                        <thead class="text-secondary"><tr><th>Center</th><th>Location</th><th class="text-center">Occupants</th><th class="text-center">Available</th><th class="text-center">Status</th></tr></thead>
-                        <tbody>
-                            @foreach (var c in evac.ActiveCenters)
-                            {
-                                var oc = c.OccupancyStatus;
-                                var b = oc == "FULL" ? "bg-danger" : oc == "NEAR CAPACITY" ? "bg-warning text-dark" : oc == "CLOSED" ? "bg-secondary" : "bg-success";
-                                <tr>
-                                    <td class="fw-semibold text-dark">@c.Name</td>
-                                    <td class="text-secondary">@c.Address @(string.IsNullOrWhiteSpace(c.SitioPurok) ? "" : $"({c.SitioPurok})")</td>
-                                    <td class="text-center">@c.CurrentOccupants / @c.Capacity</td>
-                                    <td class="text-center fw-semibold">@c.AvailableSlots</td>
-                                    <td class="text-center"><span class="badge @b">@oc</span></td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            }
-            else
-            {
-                <p class="text-muted small mb-0"><i class="bi bi-info-circle me-1"></i>Walang aktibong evacuation center sa kasalukuyan.</p>
-            }
-        </div>
+    <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i> @TempData["SmsSuccess"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+@if (TempData["SmsWarning"] != null)
+{
+    <div class="alert alert-warning alert-dismissible fade show shadow-sm" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["SmsWarning"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+@if (TempData["SmsError"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+        <i class="bi bi-x-circle-fill me-2"></i> @TempData["SmsError"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 }
 
-<div class="card border-0 shadow-sm rounded-3">
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light text-secondary small fw-bold">
-                    <tr>
-                        <th class="ps-4 py-3">Incident / Calamity Name</th>
-                        <th class="py-3">Type</th>
-                        <th class="py-3">Date</th>
-                        <th class="py-3">Impact (HH / Indiv)</th>
-                        <th class="py-3">Evac Center</th>
-                        <th class="py-3">Relief Dist.</th>
-                        <th class="text-end pe-4 py-3">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="small">
-                    @if (Model == null || !Model.Any())
+<!-- DISASTER INCIDENTS TABLE -->
+<div class="card border-0 shadow-sm rounded p-4 mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold text-dark mb-0"><i class="bi bi-journal-text me-2 text-danger"></i>Active & Recorded Incident Logs</h5>
+        <span class="badge bg-light text-dark border">Barangay Staff Desk</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Uri ng Kalamidad (Type)</th>
+                    <th>Apektadong Lugar (Location)</th>
+                    <th>Petsa at Oras (Date/Time)</th>
+                    <th>Status ng Sitwasyon</th>
+                    <th class="text-end">Aksyon (Actions)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Any())
+                {
+                    @foreach (var item in Model)
                     {
                         <tr>
-                            <td colspan="7" class="text-center py-4 text-muted">
-                                <i class="bi bi-sun display-6 d-block mb-2 text-success"></i>
-                                Ligtas ang komunidad. Walang aktibong kalamidad o insidente.
+                            <td>
+                                <span class="fw-semibold text-dark d-block">@item.DisasterType</span>
+                                @if (!string.IsNullOrEmpty(item.Description))
+                                {
+                                    <small class="text-muted d-inline-block text-truncate" style="max-width: 280px;" title="@item.Description">@item.Description</small>
+                                }
+                            </td>
+                            <td>
+                                <i class="bi bi-geo-alt-fill text-danger me-1"></i> @(string.IsNullOrEmpty(item.Location) ? "Hindi Tukoy" : item.Location)
+                            </td>
+                            <td>
+                                <i class="bi bi-calendar-event me-1 text-muted"></i> @item.DateOccurred.ToString("MM/dd/yyyy hh:mm tt")
+                            </td>
+                            <td>
+                                @if (item.Status == "Active")
+                                {
+                                    <span class="badge bg-danger">Active</span>
+                                }
+                                else if (item.Status == "Controlled")
+                                {
+                                    <span class="badge bg-warning text-dark">Controlled</span>
+                                }
+                                else if (item.Status == "Resolved")
+                                {
+                                    <span class="badge bg-success">Resolved</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">@item.Status</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <!-- 🔑 INAYOS NA DITO ANG EDIT AT DELETE BUTTONS PAPUNTA SA STAFF -->
+                                <div class="btn-group" role="group">
+                                    <a asp-area="Staff" asp-controller="Disasters" asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-warning" title="Baguhin">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <a asp-area="Staff" asp-controller="Disasters" asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger ms-1" title="Burahin">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                </div>
                             </td>
                         </tr>
                     }
-                    else
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="5" class="text-center py-5 text-muted">
+                            <i class="bi bi-shield-slash display-6 d-block mb-2 text-secondary"></i>
+                            <span>Walang aktibong ulat ng kalamidad o insidente sa kasalukuyan. Ligtas ang buong barangay.</span>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@if (isStaff)
+{
+    <!-- 📱 EMERGENCY NOTIFICATION BANNER -->
+    <div class="card border-0 shadow-sm rounded p-4 mt-4 border-start border-danger border-4 bg-white">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                <h4 class="fw-bold text-dark mb-1"><i class="bi bi-broadcast-pin text-danger me-2"></i>Emergency Notification Dispatcher</h4>
+                <p class="text-muted small mb-0">Magpadala ng Emergency SMS Alert sa mga residente gamit ang Semaphore API. <span class="badge bg-primary-subtle text-primary ms-1">Barangay Staff Authorized</span></p>
+            </div>
+            <button type="button" class="btn btn-danger btn-lg shadow-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#emergencySmsModal">
+                <i class="bi bi-megaphone-fill me-1"></i> Send Emergency Alert
+            </button>
+        </div>
+    </div>
+
+    <!-- 📜 SMS ALERT HISTORY TABLE -->
+    <div class="card border-0 shadow-sm rounded p-4 mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold text-dark mb-0"><i class="bi bi-clock-history text-secondary me-2"></i>SMS Alert Broadcast History</h5>
+            <!-- 🔑 INAYOS ANG LINK PAPUNTANG STAFF SMS HISTORY -->
+            <a asp-area="Staff" asp-controller="Disasters" asp-action="SmsHistory" class="btn btn-sm btn-outline-secondary">
+                View Full Logs <i class="bi bi-arrow-right ms-1"></i>
+            </a>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Date &amp; Time</th>
+                        <th>Emergency Type</th>
+                        <th>Recipients</th>
+                        <th class="text-center">No. of Recipients</th>
+                        <th class="text-center">Status</th>
+                        <th class="text-center">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (smsHistory != null && smsHistory.Any())
                     {
-                        @foreach (var item in Model)
+                        @foreach (var h in smsHistory)
                         {
                             <tr>
-                                <td class="ps-4 fw-semibold text-dark">@item.IncidentName</td>
+                                <td><i class="bi bi-calendar-event me-1 text-muted"></i>@h.SentAt.ToString("MM/dd/yyyy h:mm tt")</td>
                                 <td>
-                                    <span class="badge bg-secondary-subtle text-dark px-2.5 py-1.5 rounded">
-                                        @item.DisasterType
-                                    </span>
+                                    <span class="fw-semibold">@h.EmergencyType</span><br />
+                                    <small class="text-muted text-truncate d-inline-block" style="max-width:280px;" title="@h.Message">@h.Message</small>
                                 </td>
-                                <td class="text-secondary">@item.OccurrenceDate.ToString("MMM dd, yyyy")</td>
-                                <td class="fw-semibold text-dark">
-                                    <span class="text-danger">@item.AffectedHouseholdsCount HH</span> /
-                                    <span class="text-secondary">@item.DisplacedIndividualsCount Pax</span>
-                                </td>
-                                <td>
-                                    @if (item.EvacuationCenterStatus == "Open")
+                                <td><span class="badge bg-light text-dark border">@h.RecipientGroup</span></td>
+                                <td class="text-center">@h.RecipientCount @(h.FailedCount > 0 ? $"({h.SuccessCount} ok / {h.FailedCount} failed)" : "")</td>
+                                <td class="text-center">
+                                    @if (h.Status == "Sent")
                                     {
-                                        <span class="badge bg-danger-subtle text-danger px-2 py-1 rounded fw-medium">OPEN</span>
+                                        <span class="badge bg-success">Sent</span>
+                                    }
+                                    else if (h.Status == "Partial")
+                                    {
+                                        <span class="badge bg-warning text-dark">Partial</span>
                                     }
                                     else
                                     {
-                                        <span class="badge bg-light text-muted border px-2 py-1 rounded fw-medium">Closed</span>
+                                        <span class="badge bg-danger">Failed</span>
                                     }
                                 </td>
-                                <td>
-                                    @if (item.ReliefDistributionStatus?.ToLower() == "completed")
-                                    {
-                                        <span class="text-success fw-semibold"><i class="bi bi-check-circle-fill me-1"></i>Completed</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="text-warning fw-semibold"><i class="bi bi-hourglass-split me-1"></i>Ongoing</span>
-                                    }
-                                </td>
-                                <td class="text-end pe-4">
-                                    <a asp-action="Manage" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger px-2">
-                                        <i class="bi bi-gear-fill"></i> Track
-                                    </a>
+                                <td class="text-center">
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-danger delete-sms-btn"
+                                            title="Burahin sa History"
+                                            aria-label="Delete SMS Log"
+                                            data-bs-toggle="modal" data-bs-target="#deleteSmsModal"
+                                            data-id="@h.Id"
+                                            data-emergency="@h.EmergencyType"
+                                            data-date="@h.SentAt.ToString("MM/dd/yyyy h:mm tt")"
+                                            data-recipients="@h.RecipientGroup">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
                                 </td>
                             </tr>
                         }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center py-4 text-muted">
+                                <i class="bi bi-inbox display-6 d-block mb-2 text-secondary"></i>
+                                Wala pang naipadalang emergency SMS alert sa kasalukuyan.
+                            </td>
+                        </tr>
                     }
                 </tbody>
             </table>
         </div>
     </div>
-</div>
 
-<style>
-    .bg-danger-subtle {
-        background-color: #ffeef2;
-    }
+    <!-- 🗑 DELETE SMS ALERT CONFIRMATION MODAL -->
+    <div class="modal fade" id="deleteSmsModal" tabindex="-1" aria-labelledby="deleteSmsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <!-- 🔑 INAYOS ANG FORM ACTION PAPUNTA SA STAFF -->
+                <form asp-area="Staff" asp-controller="Disasters" asp-action="DeleteSmsAlert" method="post" id="deleteSmsForm">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" id="deleteSmsId" value="" />
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title" id="deleteSmsModalLabel"><i class="bi bi-exclamation-triangle-fill me-2"></i>Kumpirmahin ang Pagbura</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="mb-3">Sigurado ka bang nais mong burahin ang record ng SMS alert na ito mula sa system log history?</p>
+                        <dl class="row mb-3 small">
+                            <dt class="col-4 text-muted">Emergency Type:</dt>
+                            <dd class="col-8 fw-semibold" id="deleteSmsEmergency">—</dd>
+                            <dt class="col-4 text-muted">Petsa at Oras:</dt>
+                            <dd class="col-8" id="deleteSmsDate">—</dd>
+                            <dt class="col-4 text-muted">Recipients:</dt>
+                            <dd class="col-8" id="deleteSmsRecipients">—</dd>
+                        </dl>
+                        <div class="alert alert-warning mb-0 py-2 small"><i class="bi bi-exclamation-circle me-1"></i>Ang aksyong ito ay hindi na pwedeng bawiin.</div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Kanselahin</button>
+                        <button type="submit" class="btn btn-danger" id="deleteSmsConfirmBtn">
+                            <span class="dsms-label"><i class="bi bi-trash me-1"></i>Burahin</span>
+                            <span class="dsms-loading d-none"><span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Binubura...</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
-    .bg-secondary-subtle {
-        background-color: #f1f3f5;
+    <!-- 📱 EMERGENCY SMS ALERT FORM MODAL -->
+    <div class="modal fade" id="emergencySmsModal" tabindex="-1" aria-labelledby="emergencySmsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <!-- 🔑 INAYOS ANG FORM ACTION PAPUNTA SA STAFF -->
+                <form asp-area="Staff" asp-controller="Disasters" asp-action="SendEmergencyAlert" method="post" id="emergencySmsForm">
+                    @Html.AntiForgeryToken()
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title" id="emergencySmsModalLabel"><i class="bi bi-megaphone-fill me-2"></i>Emergency SMS Alert Dispatcher</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- Emergency Type + Severity -->
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-7">
+                                <label class="form-label fw-semibold">Uri ng Emergency (Type)</label>
+                                <select name="EmergencyType" class="form-select" required>
+                                    <option value="">-- Pumili ng Uri ng Emergency --</option>
+                                    <option value="Typhoon">Bagyo (Typhoon)</option>
+                                    <option value="Flood">Baha (Flood)</option>
+                                    <option value="Earthquake">Lindol (Earthquake)</option>
+                                    <option value="Fire">Sunog (Fire)</option>
+                                    <option value="Landslide">Landslide</option>
+                                    <option value="Volcanic Activity">Pagsabog ng Bulkan</option>
+                                    <option value="Evacuation Order">Evacuation Order</option>
+                                    <option value="Other Emergency">Iba pang Emergency</option>
+                                </select>
+                            </div>
+                            <div class="col-md-5">
+                                <label class="form-label fw-semibold">Severity / Antas</label>
+                                <select name="Severity" class="form-select">
+                                    <option value="Info">Info (Impormasyon)</option>
+                                    <option value="Low">Low (Mababa)</option>
+                                    <option value="Moderate">Moderate (Katamtaman)</option>
+                                    <option value="High" selected>High (Mataas)</option>
+                                    <option value="Critical">Critical (Kritikal / Panganib)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Recipients Selection -->
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Target Recipients</label>
+                                <select name="RecipientGroup" id="recipientGroupSelect" class="form-select">
+                                    <option value="All Residents">Lahat ng Residente (All Residents)</option>
+                                    <option value="Purok">Ayon sa Purok (By Purok)</option>
+                                    <option value="Selected">Mga piling Residente (Selected Only)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6" id="purokWrapper" style="display:none;">
+                                <label class="form-label fw-semibold">Pumili ng Purok / Area</label>
+                                <select name="Purok" class="form-select">
+                                    <option value="">-- Pumili ng Purok --</option>
+                                    @foreach (var p in purokOptions)
+                                    {
+                                        <option value="@p">@p</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Selected Residents Picker -->
+                        <div class="mb-3 mt-3" id="selectedWrapper" style="display:none;">
+                            <label class="form-label fw-semibold">Pumili ng mga Residente <small class="text-muted">(Ctrl + Click para pumili ng marami)</small></label>
+                            
+                            <input type="text" id="residentSearchInput" class="form-control form-control-sm mb-2" placeholder="🔍 Maghanap ng pangalan o purok..." />
+
+                            <select name="SelectedResidentIds" id="residentMultiSelect" class="form-select" multiple size="6">
+                                @foreach (var r in residentOptions)
+                                {
+                                    <option value="@r.Id">@r.FullName — @r.Purok (@(string.IsNullOrEmpty(r.ContactNumber) ? "walang numero" : r.ContactNumber))</option>
+                                }
+                            </select>
+                        </div>
+
+                        <!-- SMS Message Input -->
+                        <div class="mb-2 mt-3">
+                            <label class="form-label fw-semibold">Mensahe (SMS Message)</label>
+                            <textarea name="Message" id="smsMessage" class="form-control" rows="4" maxlength="600" required
+                                      placeholder="Hal.: EMERGENCY ALERT: Dahil sa malakas na ulan at posibleng pagbaha, ang mga residente sa Purok 4 ay pinapayuhang lumikas agad sa pinakamalapit na evacuation center."></textarea>
+                            <div class="d-flex justify-content-between align-items-center mt-1">
+                                <small class="text-muted"><span id="charCount">0</span>/600 karakter</small>
+                                <small class="text-muted"><span id="creditCount" class="badge bg-light text-dark border">1 SMS part</span></small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Kanselahin</button>
+                        <button type="button" class="btn btn-danger fw-semibold" id="triggerConfirmBtn">
+                            <i class="bi bi-send-fill me-1"></i> Send via Semaphore
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ✅ CONFIRMATION DIALOG MODAL -->
+    <div class="modal fade" id="confirmSendModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title"><i class="bi bi-question-circle text-warning me-2"></i>Kumpirmahin ang Pagpapadala</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="previewLoading" class="text-center py-4 text-muted">
+                        <div class="spinner-border text-danger mb-2" role="status"></div>
+                        <div>Kinakalkula ang mga recipient mula sa database…</div>
+                    </div>
+
+                    <div id="previewError" class="alert alert-danger d-none" role="alert"></div>
+
+                    <div id="previewContent" class="d-none">
+                        <div id="allResidentsWarning" class="alert alert-warning d-none" role="alert">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                            <strong>PAALALA:</strong> Magpapadala ka ng emergency SMS sa <strong><span class="prev-sms">0</span> residente</strong> ng buong barangay.
+                        </div>
+
+                        <div class="row g-2 mb-3">
+                            <div class="col-6 col-md-3"><div class="border rounded p-2 text-center"><div class="fw-bold text-dark prev-total">0</div><div class="small text-muted">Matching</div></div></div>
+                            <div class="col-6 col-md-3"><div class="border rounded p-2 text-center"><div class="fw-bold text-success prev-valid">0</div><div class="small text-muted">Valid Numbers</div></div></div>
+                            <div class="col-6 col-md-3"><div class="border rounded p-2 text-center"><div class="fw-bold text-secondary prev-invalid">0</div><div class="small text-muted">Missing/Invalid</div></div></div>
+                            <div class="col-6 col-md-3"><div class="border rounded p-2 text-center bg-danger-subtle"><div class="fw-bold text-danger prev-sms">0</div><div class="small text-muted">SMS to Send</div></div></div>
+                        </div>
+
+                        <div class="mb-2 small text-muted">Recipients: <strong id="prevGroup"></strong> &middot; Type: <strong id="prevType"></strong></div>
+
+                        <label class="form-label fw-semibold mb-1">SMS Preview</label>
+                        <div class="border rounded bg-light p-3">
+                            <div class="fw-bold text-danger mb-1"><i class="bi bi-broadcast me-1"></i>BARANGAY EMERGENCY ALERT</div>
+                            <div id="prevMessage" style="white-space:pre-wrap;"></div>
+                        </div>
+                        <div class="mt-1 small text-muted">
+                            Karakter: <span id="prevChars">0</span> &middot; Total SMS Broadcasts: <span class="prev-sms">0</span>
+                        </div>
+
+                        <div id="noValidWarning" class="alert alert-danger mt-3 d-none" role="alert">
+                            <i class="bi bi-x-octagon-fill me-1"></i> Walang valid na mobile number sa napiling recipients. Walang maipapadala.
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kanselahin</button>
+                    <button type="button" class="btn btn-danger fw-semibold" id="confirmSendBtn" disabled>
+                        <span class="spinner-border spinner-border-sm me-1 d-none" id="confirmSpinner" role="status"></span>
+                        <i class="bi bi-check2-circle me-1"></i> Confirm &amp; Send Now
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @section Scripts {
+        <script>
+            // ---- Emergency SMS Logic Script ----
+            (function () {
+                const groupSelect = document.getElementById('recipientGroupSelect');
+                const purokWrapper = document.getElementById('purokWrapper');
+                const selectedWrapper = document.getElementById('selectedWrapper');
+                const msg = document.getElementById('smsMessage');
+                const charCount = document.getElementById('charCount');
+                const creditCount = document.getElementById('creditCount');
+                const form = document.getElementById('emergencySmsForm');
+                const triggerBtn = document.getElementById('triggerConfirmBtn');
+                const confirmBtn = document.getElementById('confirmSendBtn');
+                const confirmSpinner = document.getElementById('confirmSpinner');
+
+                const elLoading = document.getElementById('previewLoading');
+                const elError = document.getElementById('previewError');
+                const elContent = document.getElementById('previewContent');
+                // 🔑 INAYOS ANG URL ACTION PAPUNTANG STAFF AREA
+                const previewUrl = '@Url.Action("PreviewEmergencyAlert", "Disasters", new { area = "Staff" })';
+                const token = form.querySelector('input[name="__RequestVerificationToken"]').value;
+
+                let submitting = false;
+
+                function toggleRecipient() {
+                    const v = groupSelect.value;
+                    purokWrapper.style.display = (v === 'Purok') ? 'block' : 'none';
+                    selectedWrapper.style.display = (v === 'Selected') ? 'block' : 'none';
+                }
+                groupSelect.addEventListener('change', toggleRecipient);
+                toggleRecipient();
+
+                const residentSearchInput = document.getElementById('residentSearchInput');
+                const residentMultiSelect = document.getElementById('residentMultiSelect');
+                if (residentSearchInput && residentMultiSelect) {
+                    residentSearchInput.addEventListener('input', function () {
+                        const filter = this.value.toLowerCase();
+                        Array.from(residentMultiSelect.options).forEach(option => {
+                            const text = option.text.toLowerCase();
+                            option.style.display = text.includes(filter) ? '' : 'none';
+                        });
+                    });
+                }
+
+                if (msg) {
+                    msg.addEventListener('input', function () {
+                        const len = msg.value.length;
+                        charCount.textContent = len;
+                        
+                        let parts = 1;
+                        if (len > 160) {
+                            parts = Math.ceil(len / 153);
+                        }
+                        creditCount.textContent = `${parts} SMS part${parts > 1 ? 's' : ''}`;
+                    });
+                }
+
+                const confirmModal = new bootstrap.Modal(document.getElementById('confirmSendModal'));
+
+                function setText(sel, val) {
+                    document.querySelectorAll(sel).forEach(function (n) { n.textContent = val; });
+                }
+
+                async function loadPreview() {
+                    elLoading.classList.remove('d-none');
+                    elError.classList.add('d-none');
+                    elContent.classList.add('d-none');
+                    confirmBtn.disabled = true;
+
+                    try {
+                        const fd = new FormData(form);
+                        fd.set('__RequestVerificationToken', token);
+                        const res = await fetch(previewUrl, { 
+                            method: 'POST', 
+                            body: fd, 
+                            headers: { 'X-Requested-With': 'XMLHttpRequest' } 
+                        });
+
+                        if (!res.ok) throw new Error('Preview request failed (' + res.status + ')');
+                        const data = await res.json();
+
+                        elLoading.classList.add('d-none');
+
+                        if (!data.success) {
+                            elError.textContent = data.message || 'Hindi makuha ang recipient preview.';
+                            elError.classList.remove('d-none');
+                            return;
+                        }
+
+                        setText('.prev-total', data.totalMatching.toLocaleString());
+                        setText('.prev-valid', data.validCount.toLocaleString());
+                        setText('.prev-invalid', data.invalidCount.toLocaleString());
+                        setText('.prev-sms', data.smsToSend.toLocaleString());
+                        document.getElementById('prevGroup').textContent = data.recipientGroup;
+                        document.getElementById('prevType').textContent = data.emergencyType + (data.severity ? (' — ' + data.severity) : '');
+                        document.getElementById('prevMessage').textContent = msg.value;
+                        document.getElementById('prevChars').textContent = msg.value.length;
+
+                        document.getElementById('allResidentsWarning').classList.toggle('d-none', !data.isAllResidents);
+
+                        const noValid = data.smsToSend === 0;
+                        document.getElementById('noValidWarning').classList.toggle('d-none', !noValid);
+                        confirmBtn.disabled = noValid;
+
+                        elContent.classList.remove('d-none');
+                    } catch (err) {
+                        elLoading.classList.add('d-none');
+                        elError.textContent = 'SMS preview service temporarily unavailable. ' + err.message;
+                        elError.classList.remove('d-none');
+                    }
+                }
+
+                triggerBtn.addEventListener('click', function () {
+                    if (!form.checkValidity()) {
+                        form.reportValidity();
+                        return;
+                    }
+                    confirmModal.show();
+                    loadPreview();
+                });
+
+                confirmBtn.addEventListener('click', function () {
+                    if (submitting) return;
+                    submitting = true;
+                    confirmBtn.disabled = true;
+                    confirmSpinner.classList.remove('d-none');
+                    triggerBtn.disabled = true;
+                    form.submit();
+                });
+            })();
+        </script>
+
+        <script>
+            // ---- Delete SMS Alert Modal Management ----
+            (function () {
+                const modal = document.getElementById('deleteSmsModal');
+                if (!modal) return;
+
+                const idField = document.getElementById('deleteSmsId');
+                const emEl = document.getElementById('deleteSmsEmergency');
+                const dateEl = document.getElementById('deleteSmsDate');
+                const recEl = document.getElementById('deleteSmsRecipients');
+                const deleteForm = document.getElementById('deleteSmsForm');
+                const btn = document.getElementById('deleteSmsConfirmBtn');
+                const label = btn.querySelector('.dsms-label');
+                const loading = btn.querySelector('.dsms-loading');
+                let submitting = false;
+
+                modal.addEventListener('show.bs.modal', function (event) {
+                    const trigger = event.relatedTarget;
+                    if (!trigger) return;
+
+                    idField.value = trigger.getAttribute('data-id') || '';
+                    emEl.textContent = trigger.getAttribute('data-emergency') || '—';
+                    dateEl.textContent = trigger.getAttribute('data-date') || '—';
+                    recEl.textContent = trigger.getAttribute('data-recipients') || '—';
+                });
+
+                modal.addEventListener('hidden.bs.modal', function () {
+                    submitting = false;
+                    btn.disabled = false;
+                    if (label) label.classList.remove('d-none');
+                    if (loading) loading.classList.add('d-none');
+                });
+
+                deleteForm.addEventListener('submit', function (e) {
+                    if (submitting) {
+                        e.preventDefault();
+                        return;
+                    }
+                    submitting = true;
+                    btn.disabled = true;
+                    if (label) label.classList.add('d-none');
+                    if (loading) loading.classList.remove('d-none');
+                });
+            })();
+        </script>
     }
-</style>
+}

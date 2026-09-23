@@ -1,56 +1,74 @@
-@model BarangayCMS.Areas.Staff.ViewModels.DisasterViewModel
+@model BarangayCMS.Web.Areas.Staff.Models.DisasterViewModel
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 @{
     Layout = "~/Areas/Staff/Views/Shared/_Layout.cshtml";
-    ViewData["Title"] = "Log Incident Report";
+    ViewData["Title"] = "Iulat ang Kalamidad";
 }
 
 <div class="page-header">
     <div>
-        <h1 class="page-header__title"><i class="bi bi-exclamation-triangle-fill"></i> Crisis Response Logging Form</h1>
-        <p class="page-header__sub">I-tala ang impormasyon tungkol sa sakuna o emergency sa barangay.</p>
+        <h1 class="page-header__title"><i class="bi bi-exclamation-triangle-fill"></i> Pagtatala ng Bagong Insidente / Kalamidad</h1>
     </div>
     <a asp-action="Index" class="btn btn-light border fw-semibold rounded-3"><i class="bi bi-arrow-left me-1"></i> Bumalik</a>
 </div>
 
 <div class="form-page">
-    <form asp-action="Create" method="post">
-        @Html.AntiForgeryToken()
+    <form asp-action="Create">
         <div class="app-card app-card--pad">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
             <div class="mb-3">
-                <label asp-for="IncidentName" class="form-label fw-semibold"></label>
-                <input asp-for="IncidentName" class="form-control" placeholder="e.g., Bagyong Egay Flooding, Sunog sa Purok 5" />
-                <span asp-validation-for="IncidentName" class="text-danger small"></span>
-            </div>
-
-            <div class="mb-3">
-                <label asp-for="DisasterType" class="form-label fw-semibold"></label>
-                <input asp-for="DisasterType" class="form-control" placeholder="e.g., Flash Flood, Earthquake, Structural Collapse" />
-                <span asp-validation-for="DisasterType" class="text-danger small"></span>
-            </div>
-
-            <div class="mb-3">
-                <label asp-for="Location" class="form-label fw-semibold"></label>
-                <input asp-for="Location" class="form-control" placeholder="Saan partikular na lugar o purok nangyari..." />
-                <span asp-validation-for="Location" class="text-danger small"></span>
+                <label asp-for="DisasterType" class="form-label fw-bold"></label>
+                <select asp-for="DisasterType" class="form-select">
+                    <option value="">-- Pumili ng Uri --</option>
+                    <option value="Bagyo (Typhoon)">Bagyo (Typhoon)</option>
+                    <option value="Baha (Flooding)">Baha (Flooding)</option>
+                    <option value="Sunog (Fire Incident)">Sunog (Fire Incident)</option>
+                    <option value="Lindol (Earthquake)">Lindol (Earthquake)</option>
+                    <option value="Landslide">Landslide</option>
+                    <option value="Health Emergency">Health Emergency / Epidemya</option>
+                </select>
+                <span asp-validation-for="DisasterType" class="text-danger"></span>
             </div>
 
             <div class="mb-3">
-                <label asp-for="OccurrenceDate" class="form-label fw-semibold"></label>
-                <input asp-for="OccurrenceDate" class="form-control" type="datetime-local" />
-                <span asp-validation-for="OccurrenceDate" class="text-danger small"></span>
+                <label asp-for="Location" class="form-label fw-bold"></label>
+                <input asp-for="Location" class="form-control" placeholder="e.g., Purok 4, Tabing Ilog" />
+                <span asp-validation-for="Location" class="text-danger"></span>
             </div>
 
-            <div class="mb-4">
-                <label asp-for="Description" class="form-label fw-semibold"></label>
-                <textarea asp-for="Description" class="form-control" rows="4" placeholder="Ilarawan ang kasalukuyang sitwasyon o lawak ng pinsala..."></textarea>
-                <span asp-validation-for="Description" class="text-danger small"></span>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="DateOccurred" class="form-label fw-bold"></label>
+                    <input asp-for="DateOccurred" class="form-control" type="datetime-local" />
+                    <span asp-validation-for="DateOccurred" class="text-danger"></span>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="Status" class="form-label fw-bold"></label>
+                    <select asp-for="Status" class="form-select">
+                        <option value="Active">Active (Kasalukuyang Nangyayari)</option>
+                        <option value="Controlled">Controlled (Kontrolado Na)</option>
+                        <option value="Resolved">Resolved (Ligtas Na)</option>
+                        <option value="Cleared">Cleared (Tapos Na)</option>
+                    </select>
+                    <span asp-validation-for="Status" class="text-danger"></span>
+                </div>
             </div>
 
-            <div class="d-flex justify-content-end gap-2 border-top pt-3 mt-4">
-                <a asp-action="Index" class="btn btn-light border px-4">Cancel</a>
-                <button type="submit" class="btn btn-brand px-4">Submit Crisis Log</button>
+            <div class="mb-3">
+                <label asp-for="Description" class="form-label fw-bold"></label>
+                <textarea asp-for="Description" class="form-control" rows="4" placeholder="Ibuod ang kasalukuyang sitwasyon o mga pinsala..."></textarea>
+                <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+
+            <div class="d-flex gap-2 justify-content-end border-top pt-3 mt-4">
+                <a asp-action="Index" class="btn btn-light border px-4">Bumalik</a>
+                <button type="submit" class="btn btn-brand px-4">I-save at I-monitor</button>
             </div>
         </div>
     </form>
 </div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

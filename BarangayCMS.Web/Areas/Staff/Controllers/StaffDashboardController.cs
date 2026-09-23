@@ -5,12 +5,13 @@ using Microsoft.EntityFrameworkCore;
 using BarangayCMS.DAL.Context;
 using BarangayCMS.Entities;
 using BarangayManagementSystem.Areas.Staff.ViewModels;
+using System.Threading.Tasks;
 
 namespace BarangayCMS.Web.Areas.Staff.Controllers
 {
     [Area("Staff")]
-    [Authorize(Roles = "Staff,Staff / Encoder")]
-    [Route("Staff/[controller]/[action]")]
+    [Authorize(Roles = "Staff,Staff / Encoder,Admin,SuperAdmin")]
+    [Route("Staff/[controller]")]
     public class StaffDashboardController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -22,8 +23,12 @@ namespace BarangayCMS.Web.Areas.Staff.Controllers
             _userManager = userManager;
         }
 
-        [Route("~/Staff")]
-        [Route("~/Staff/StaffDashboard")]
+        // 🔑 Pinagsama sa malinis na HTTP GET route na walang duplicate/ambiguous matches
+        [HttpGet]
+        [Route("")]
+        [Route("Index")]
+        [Route("/Staff")]
+        [Route("/Staff/Dashboard")]
         public async Task<IActionResult> Index()
         {
             // Kukunin ang kasalukuyang naka-login na Staff
@@ -33,11 +38,9 @@ namespace BarangayCMS.Web.Areas.Staff.Controllers
             // Populate dashboard data mula sa Database
             var model = new DashboardViewModel
             {
-                // Aligned sa Reports at Public Home (bibilangin lamang ang tunay
-                // na residente) para pare-pareho ang bilang sa lahat ng portal.
                 TotalResidents = await _context.Residents.CountAsync(r => r.IsResident),
                 ActiveBlotters = await _context.Complaints.CountAsync(c => c.Status == "Pending"),
-                PendingCertificates = await _context.Certificates.CountAsync(),
+                PendingCertificates = await _context.Certificates.CountAsync(c => c.Status == "Pending"),
                 RecentAnnouncementsCount = await _context.Announcements.CountAsync()
             };
 

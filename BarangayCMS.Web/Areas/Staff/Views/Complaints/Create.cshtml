@@ -6,70 +6,89 @@
     ViewData["Title"] = "File Complaint";
 }
 
-<div class="page-header d-flex justify-content-between align-items-center mb-4">
+<div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h1 class="page-header__title"><i class="bi bi-file-earmark-medical text-warning me-2"></i> Barangay Blotter Entry Form</h1>
-        <p class="page-header__sub text-muted small mb-0">Record a new incident blotter or legal citizen complaint.</p>
+        <h2 class="fw-bold text-dark mb-1">
+            <i class="bi bi-file-earmark-text-fill text-warning me-2"></i>Barangay Blotter Entry Form
+        </h2>
+        <p class="text-muted small mb-0">Record a new incident blotter or legal citizen complaint.</p>
     </div>
-    <a asp-area="Staff" asp-controller="Complaints" asp-action="Index" class="btn btn-light border fw-semibold rounded-3"><i class="bi bi-arrow-left me-1"></i> Back</a>
+    <a asp-action="Index" class="btn btn-outline-secondary btn-sm px-3 fw-semibold">
+        <i class="bi bi-arrow-left me-1"></i> Back
+    </a>
 </div>
 
-<div class="form-page">
-    <form asp-area="Staff" asp-controller="Complaints" asp-action="Create" method="post">
-        @Html.AntiForgeryToken()
-        <div class="app-card app-card--pad" style="max-width: 800px; margin: 0 auto;">
-            <div asp-validation-summary="ModelOnly" class="text-danger mb-3 small fw-bold"></div>
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card border-0 shadow-sm rounded-3 p-4">
+            <form asp-action="Create" method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
 
-            <!-- Complainant Dropdown -->
-            <div class="mb-3">
-                <label asp-for="ResidentId" class="form-label fw-bold small text-secondary">Select Complainant (Resident)</label>
-                <select asp-for="ResidentId" asp-items="Model.ResidentList" class="form-select">
-                    <option value="">-- Choose Resident from Database --</option>
-                </select>
-                <span asp-validation-for="ResidentId" class="text-danger small"></span>
-            </div>
-
-            <!-- Subject Input -->
-            <div class="mb-3">
-                <label asp-for="Subject" class="form-label fw-bold small text-secondary">Nature of Incident / Subject</label>
-                <input asp-for="Subject" class="form-control" placeholder="e.g., Noise Complaint, Boundary Dispute, Physical Altercation" />
-                <span asp-validation-for="Subject" class="text-danger small"></span>
-            </div>
-
-            <!-- Narrative Details -->
-            <div class="mb-3">
-                <label asp-for="Description" class="form-label fw-bold small text-secondary">Narrative & Incident Details</label>
-                <textarea asp-for="Description" class="form-control" rows="5" placeholder="Write down structural specifics, names of witnesses, and statements..."></textarea>
-                <span asp-validation-for="Description" class="text-danger small"></span>
-            </div>
-
-            <!-- Date and Status Row -->
-            <div class="row g-3">
-                <div class="col-md-6 mb-3">
-                    <label asp-for="DateSubmitted" class="form-label fw-bold small text-secondary">Date of Logging</label>
-                    <input asp-for="DateSubmitted" class="form-control" type="datetime-local" />
-                    <span asp-validation-for="DateSubmitted" class="text-danger small"></span>
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label asp-for="Status" class="form-label fw-bold small text-secondary">Initial Entry Status</label>
-                    <select asp-for="Status" class="form-select">
-                        <option value="Pending">Pending Audit</option>
-                        <option value="Assigned">Assigned to Mediation</option>
-                        <option value="Resolved">Closed / Resolved</option>
+                <!-- Select Resident Dropdown -->
+                <div class="mb-3">
+                    <label asp-for="ResidentId" class="form-label small fw-bold text-secondary">
+                        Select Complainant (Resident)
+                    </label>
+                    <select asp-for="ResidentId" 
+                            asp-items="@(ViewBag.ResidentsList as SelectList)" 
+                            class="form-select">
+                        <option value="">-- Choose Resident from Database --</option>
                     </select>
-                    <span asp-validation-for="Status" class="text-danger small"></span>
+                    <span asp-validation-for="ResidentId" class="text-danger small"></span>
                 </div>
-            </div>
 
-            <!-- Buttons -->
-            <div class="d-flex justify-content-end gap-2 border-top pt-3 mt-4">
-                <a asp-area="Staff" asp-controller="Complaints" asp-action="Index" class="btn btn-light border px-4 rounded-3 fw-semibold">Cancel</a>
-                <button type="submit" class="btn btn-warning text-dark px-4 fw-semibold rounded-3"><i class="bi bi-save me-1"></i> Save Record</button>
-            </div>
+                <!-- Subject / Case Number -->
+                <div class="mb-3">
+                    <label asp-for="Subject" class="form-label small fw-bold text-secondary">
+                        Subject / Incident Title
+                    </label>
+                    <input asp-for="Subject" class="form-control" placeholder="e.g., Noise Complaint, Boundary Dispute, Physical Altercation" />
+                    <span asp-validation-for="Subject" class="text-danger small"></span>
+                </div>
+
+                <!-- Narrative & Incident Details -->
+                <div class="mb-3">
+                    <label asp-for="Description" class="form-label small fw-bold text-secondary">
+                        Narrative & Incident Details
+                    </label>
+                    <textarea asp-for="Description" class="form-control" rows="4" placeholder="Write down structural specifics, names of witnesses, and statements..."></textarea>
+                    <span asp-validation-for="Description" class="text-danger small"></span>
+                </div>
+
+                <!-- Date & Initial Status -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label asp-for="DateSubmitted" class="form-label small fw-bold text-secondary">
+                            Date of Logging
+                        </label>
+                        <input asp-for="DateSubmitted" type="datetime-local" class="form-control" />
+                        <span asp-validation-for="DateSubmitted" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Status" class="form-label small fw-bold text-secondary">
+                            Initial Entry Status
+                        </label>
+                        <select asp-for="Status" class="form-select">
+                            <option value="Pending Audit">Pending Audit</option>
+                            <option value="Under Investigation">Under Investigation</option>
+                            <option value="Resolved">Resolved</option>
+                        </select>
+                        <span asp-validation-for="Status" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <!-- Buttons -->
+                <div class="d-flex justify-content-end gap-2">
+                    <a asp-action="Index" class="btn btn-light border fw-semibold px-4">Cancel</a>
+                    <button type="submit" class="btn btn-warning fw-bold px-4 text-dark">
+                        <i class="bi bi-download me-1"></i> Save Record
+                    </button>
+                </div>
+            </form>
         </div>
-    </form>
+    </div>
 </div>
 
 @section Scripts {
-    <partial name="_ValidationScriptsPartial" />
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
 }

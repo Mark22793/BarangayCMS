@@ -16,11 +16,12 @@
     </a>
 </div>
 
-<div class="app-card app-card--pad">
+<div class="app-card app-card--pad bg-white p-3 rounded-3 shadow-sm">
     <div class="table-responsive">
         <table class="table table-hover align-middle mb-0">
             <thead class="table-light">
                 <tr>
+                    <th style="width: 70px;">Image</th>
                     <th>Title Heading</th>
                     <th>Category</th>
                     <th>Status</th>
@@ -35,6 +36,24 @@
                     {
                         var isActive = !item.ExpiryDate.HasValue || item.ExpiryDate.Value >= DateTime.Now;
                         <tr>
+                            <!-- 🖼️ THUMBNAIL COLUMN -->
+                            <td>
+                                @if (!string.IsNullOrEmpty(item.ImageUrl))
+                                {
+                                    <img src="@Url.Content(item.ImageUrl)" 
+                                         alt="Preview" 
+                                         class="rounded-2 border shadow-sm" 
+                                         style="width: 50px; height: 50px; object-fit: cover;" />
+                                }
+                                else
+                                {
+                                    <div class="rounded-2 bg-light border d-flex align-items-center justify-content-center text-muted" 
+                                         style="width: 50px; height: 50px;">
+                                        <i class="bi bi-image fs-5 opacity-50"></i>
+                                    </div>
+                                }
+                            </td>
+
                             <td class="fw-semibold text-dark">
                                 <div class="d-flex align-items-center gap-2">
                                     @if (item.IsPinned)
@@ -60,9 +79,23 @@
                             </td>
                             <td>@item.DatePosted.ToString("MM/dd/yyyy")</td>
                             <td class="text-end">
-                                <a href="/Staff/Announcements/Details/@item.AnnouncementId" class="btn btn-sm btn-outline-info me-1" title="View Details"><i class="bi bi-eye"></i></a>
-                                <a href="/Staff/Announcements/Edit/@item.AnnouncementId" class="btn btn-sm btn-outline-primary me-1" title="Edit"><i class="bi bi-pencil"></i></a>
-                                <a href="/Staff/Announcements/Delete/@item.AnnouncementId" class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></a>
+                                <a href="/Staff/Announcements/Details/@item.AnnouncementId" class="btn btn-sm btn-outline-info me-1" title="View Details">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="/Staff/Announcements/Edit/@item.AnnouncementId" class="btn btn-sm btn-outline-primary me-1" title="Edit">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                
+                                <!-- Trigger button para sa Bootstrap Modal Delete -->
+                                <button type="button" 
+                                        class="btn btn-sm btn-outline-danger" 
+                                        title="Delete"
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#deleteAnnouncementModal" 
+                                        data-id="@item.AnnouncementId" 
+                                        data-title="@item.Title">
+                                    <i class="bi bi-trash"></i>
+                                </button>
                             </td>
                         </tr>
                     }
@@ -70,7 +103,7 @@
                 else
                 {
                     <tr>
-                        <td colspan="5" class="text-center py-5 text-muted">
+                        <td colspan="6" class="text-center py-5 text-muted">
                             <i class="bi bi-megaphone display-6 d-block mb-2 opacity-50"></i>
                             <span>The community board is fresh. No official bulletins running.</span>
                         </td>
@@ -80,3 +113,51 @@
         </table>
     </div>
 </div>
+
+<!-- 🔴 DELETE CONFIRMATION MODAL -->
+<div class="modal fade" id="deleteAnnouncementModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-body text-center p-4">
+                <div class="rounded-circle bg-danger-subtle text-danger d-inline-flex align-items-center justify-content-center mb-3" style="width: 70px; height: 70px;">
+                    <i class="bi bi-exclamation-triangle-fill fs-1"></i>
+                </div>
+
+                <h4 class="fw-bold text-dark mb-2">Kumpirmahin ang Pagbura</h4>
+                <p class="text-muted small mb-3">
+                    Sigurado ka bang gusto mong burahin ang anunsyo na: <br />
+                    <strong id="modalAnnounceTitle" class="text-dark fs-6"></strong>?
+                </p>
+
+                <form id="deleteForm" method="post" action="">
+                    @Html.AntiForgeryToken()
+                    <div class="d-flex justify-content-center gap-2 mt-4 pt-2 border-top">
+                        <button type="button" class="btn btn-light border px-4 fw-semibold rounded-3" data-bs-dismiss="modal">
+                            Kanselahin
+                        </button>
+                        <button type="submit" class="btn btn-danger px-4 fw-bold rounded-3 shadow-sm">
+                            <i class="bi bi-trash me-1"></i> Oo, Burahin
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Directly passes the ID and Title to the delete modal form
+        const deleteModal = document.getElementById('deleteAnnouncementModal');
+        if (deleteModal) {
+            deleteModal.addEventListener('show.bs.modal', function (event) {
+                const button = event.relatedTarget;
+                const id = button.getAttribute('data-id');
+                const title = button.getAttribute('data-title');
+
+                document.getElementById('modalAnnounceTitle').textContent = title;
+                document.getElementById('deleteForm').action = '/Staff/Announcements/Delete/' + id;
+            });
+        }
+    </script>
+}

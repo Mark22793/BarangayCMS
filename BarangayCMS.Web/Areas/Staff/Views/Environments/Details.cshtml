@@ -1,50 +1,52 @@
 ﻿@model BarangayCMS.Areas.Staff.ViewModels.EnvironmentViewModel
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
 @{
-    Layout = null;
+    Layout = "~/Areas/Staff/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Mga Detalye ng Proyekto";
 }
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8" />
-    <title>Activity Details</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-</head>
-<body class="bg-light">
-    <div class="container py-5" style="max-width: 700px;">
-        <div class="card border-0 shadow-sm p-4 rounded-3 mb-3">
-            <div class="border-bottom pb-3 mb-3 d-flex justify-content-between align-items-start">
-                <div>
-                    <span class="badge bg-success bg-opacity-10 text-success mb-2 px-2 py-1"><i class="bi bi-globe-asia-australia"></i> Eco Program Profiler</span>
-                    <h3 class="fw-bold text-dark mb-1">@Model.ActivityName</h3>
-                    <small class="text-muted"><i class="bi bi-calendar-check"></i> Event Date: @Model.ActivityDate.ToString("F")</small>
-                </div>
-                <div>
-                    @if (Model.ActivityDate >= DateTime.Now)
-                    {
-                        <span class="badge bg-primary text-primary bg-opacity-10 border px-3 py-2 fs-6">Active Schedule</span>
-                    }
-                    else
-                    {
-                        <span class="badge bg-secondary text-secondary bg-opacity-10 border px-3 py-2 fs-6">Archive Record</span>
-                    }
-                </div>
-            </div>
 
-            <div class="mb-4">
-                <span class="text-muted small d-block fw-bold mb-1">DESIGNATED LOCATION / VENUE</span>
-                <div class="p-2 bg-light border rounded text-secondary fw-semibold"><i class="bi bi-geo-alt text-success me-1"></i> @Model.Location</div>
-            </div>
-
+<div class="container py-4" style="max-width: 700px;">
+    <div class="card border-0 shadow-sm p-4 rounded-3 mb-3">
+        <div class="border-bottom pb-3 mb-3 d-flex justify-content-between align-items-start">
             <div>
-                <span class="text-muted small d-block fw-bold mb-1">ACTIVITY SUMMARY REPORT</span>
-                <p class="text-secondary p-3 border rounded bg-white" style="white-space: pre-line; line-height: 1.6; min-height: 120px;">@Model.Description</p>
+                <span class="badge bg-success bg-opacity-10 text-success mb-2 px-2 py-1">
+                    <i class="bi bi-globe-asia-australia"></i> Eco Program Profiler
+                </span>
+                <h3 class="fw-bold text-dark mb-1">@Model.ActivityName</h3>
+                <small class="text-muted"><i class="bi bi-calendar-check me-1"></i> Event Date: @Model.ActivityDate.ToString("F")</small>
+            </div>
+            <div>
+                @if (Model.ActivityDate >= DateTime.Now)
+                {
+                    <span class="badge bg-success text-success bg-opacity-10 border border-success-subtle px-3 py-2 fs-6">Active Schedule</span>
+                }
+                else
+                {
+                    <span class="badge bg-secondary text-secondary bg-opacity-10 border px-3 py-2 fs-6">Archive Record</span>
+                }
             </div>
         </div>
-        <div class="d-flex justify-content-between">
-            <a asp-action="Index" class="btn btn-sm btn-outline-secondary px-3"><i class="bi bi-arrow-left"></i> Back to Deck</a>
-            <a asp-action="Edit" asp-route-id="@Model.EnvironmentRecordId" class="btn btn-sm btn-primary px-4"><i class="bi bi-pencil"></i> Manage Program</a>
+
+        <div class="mb-4">
+            <span class="text-muted small d-block fw-bold mb-1">DESIGNATED LOCATION / VENUE</span>
+            <div class="p-2 bg-light border rounded text-secondary fw-semibold">
+                <i class="bi bi-geo-alt text-success me-1"></i> @Model.Location
+            </div>
+        </div>
+
+        <div>
+            <span class="text-muted small d-block fw-bold mb-1">ACTIVITY SUMMARY REPORT</span>
+            <p class="text-secondary p-3 border rounded bg-white" style="white-space: pre-line; line-height: 1.6; min-height: 120px;">@Model.Description</p>
         </div>
     </div>
-</body>
-</html>
+
+    <div class="d-flex justify-content-between">
+        <a asp-area="Staff" asp-controller="Environments" asp-action="Index" class="btn btn-sm btn-outline-secondary px-3">
+            <i class="bi bi-arrow-left me-1"></i> Back to Deck
+        </a>
+        <a asp-area="Staff" asp-controller="Environments" asp-action="Edit" asp-route-id="@Model.EnvironmentRecordId" class="btn btn-sm btn-success px-4">
+            <i class="bi bi-pencil me-1"></i> Manage Program
+        </a>
+    </div>
+</div>

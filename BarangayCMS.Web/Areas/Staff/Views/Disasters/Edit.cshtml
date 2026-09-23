@@ -1,121 +1,62 @@
-﻿@model BarangayCMS.Areas.Staff.ViewModels.DisasterViewModel
+﻿@model BarangayCMS.Web.Areas.Staff.Models.DisasterViewModel
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 @{
-    // 📌 Ikinabit sa Staff Shared Layout para lumabas ang sidebar at theme design
     Layout = "~/Areas/Staff/Views/Shared/_Layout.cshtml";
-    ViewData["Title"] = "Modify Operations Log";
+    ViewData["Title"] = "I-edit ang Insidente";
 }
 
-<div class="container-fluid py-3">
-    <div class="card border-0 shadow-sm p-4 rounded-3 style-container" style="max-width: 750px; margin: 0 auto;">
-        <div class="border-bottom pb-3 mb-4">
-            <span class="badge bg-primary bg-opacity-10 text-primary mb-2 px-2 py-1">
-                <i class="bi bi-pencil-square"></i> Update Emergency Operation File
-            </span>
-            <h3 class="fw-bold text-dark mb-1">Modify Operations Log</h3>
-            <p class="text-muted small mb-0">I-update ang kasalukuyang sitwasyon, bilang ng apektadong residente, at estado ng operasyon.</p>
+<div class="container mt-4" style="max-width: 650px;">
+    <div class="card shadow">
+        <div class="card-header bg-warning text-dark">
+            <h4 class="mb-0"><i class="bi bi-pencil-square"></i> Baguhin ang Detalye ng Insidente</h4>
         </div>
+        <div class="card-body">
+            <form asp-area="Staff" asp-controller="Disaster" asp-action="Edit" asp-route-id="@Model.Id" method="post">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <input type="hidden" asp-for="Id" />
 
-        <!-- 📌 Tinukoy ang asp-area at asp-controller para hindi mapunta sa Admin -->
-        <form asp-area="Staff" asp-controller="Disasters" asp-action="Edit" method="post">
-            @Html.AntiForgeryToken()
-
-            <!-- Hidden Primary Key -->
-            <input type="hidden" asp-for="Id" />
-
-            <div class="row g-3 mb-3">
-                <!-- Incident Name -->
-                <div class="col-12">
-                    <label asp-for="IncidentName" class="form-label small fw-bold text-secondary">Incident / Calamity Name</label>
-                    <input asp-for="IncidentName" class="form-control form-control-sm" placeholder="e.g., Super Typhoon Egay" />
-                    <span asp-validation-for="IncidentName" class="text-danger small"></span>
+                <div class="mb-3">
+                    <label asp-for="DisasterType" class="form-label fw-bold"></label>
+                    <input asp-for="DisasterType" class="form-control" readonly />
                 </div>
 
-                <!-- Disaster Type -->
-                <div class="col-md-6">
-                    <label asp-for="DisasterType" class="form-label small fw-bold text-secondary">Disaster / Incident Type</label>
-                    <input asp-for="DisasterType" class="form-control form-control-sm" placeholder="e.g., Typhoon Flooding" />
-                    <span asp-validation-for="DisasterType" class="text-danger small"></span>
+                <div class="mb-3">
+                    <label asp-for="Location" class="form-label fw-bold"></label>
+                    <input asp-for="Location" class="form-control" />
+                    <span asp-validation-for="Location" class="text-danger"></span>
                 </div>
 
-                <!-- Occurrence Date -->
-                <div class="col-md-6">
-                    <label asp-for="OccurrenceDate" class="form-label small fw-bold text-secondary">Date & Time Occurred</label>
-                    <input asp-for="OccurrenceDate" class="form-control form-control-sm" type="datetime-local" />
-                    <span asp-validation-for="OccurrenceDate" class="text-danger small"></span>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="DateOccurred" class="form-label fw-bold"></label>
+                        <input asp-for="DateOccurred" class="form-control" type="datetime-local" />
+                        <span asp-validation-for="DateOccurred" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Status" class="form-label fw-bold"></label>
+                        <select asp-for="Status" class="form-select">
+                            <option value="Active">Active</option>
+                            <option value="Controlled">Controlled</option>
+                            <option value="Resolved">Resolved</option>
+                            <option value="Cleared">Cleared</option>
+                        </select>
+                        <span asp-validation-for="Status" class="text-danger"></span>
+                    </div>
                 </div>
 
-                <!-- Location -->
-                <div class="col-12">
-                    <label asp-for="Location" class="form-label small fw-bold text-secondary">Affected Location / Area</label>
-                    <input asp-for="Location" class="form-control form-control-sm" placeholder="e.g., Purok 3 (Riverside)" />
-                    <span asp-validation-for="Location" class="text-danger small"></span>
-                </div>
-            </div>
-
-            <hr class="text-muted opacity-25 my-4" />
-
-            <!-- Impact & Tracking Stats Group -->
-            <div class="row g-3 mb-3">
-                <div class="col-md-6">
-                    <label asp-for="AffectedHouseholdsCount" class="form-label small fw-bold text-secondary">Affected Households (HH)</label>
-                    <input asp-for="AffectedHouseholdsCount" class="form-control form-control-sm" type="number" min="0" />
-                    <span asp-validation-for="AffectedHouseholdsCount" class="text-danger small"></span>
+                <div class="mb-3">
+                    <label asp-for="Description" class="form-label fw-bold"></label>
+                    <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+                    <span asp-validation-for="Description" class="text-danger"></span>
                 </div>
 
-                <div class="col-md-6">
-                    <label asp-for="DisplacedIndividualsCount" class="form-label small fw-bold text-secondary">Displaced Individuals (Pax)</label>
-                    <input asp-for="DisplacedIndividualsCount" class="form-control form-control-sm" type="number" min="0" />
-                    <span asp-validation-for="DisplacedIndividualsCount" class="text-danger small"></span>
+                <div class="mt-4 d-flex justify-content-between">
+                    <a asp-area="Staff" asp-controller="Disaster" asp-action="Index" class="btn btn-secondary">I-cancel</a>
+                    <button type="submit" class="btn btn-warning px-4 fw-bold">I-save ang Pagbabago</button>
                 </div>
-
-                <!-- Evacuation Center Status Dropdown -->
-                <div class="col-md-4">
-                    <label asp-for="EvacuationCenterStatus" class="form-label small fw-bold text-secondary">Evac Center Status</label>
-                    <select asp-for="EvacuationCenterStatus" class="form-select form-select-sm">
-                        <option value="Closed">Closed</option>
-                        <option value="Open">Open</option>
-                    </select>
-                    <span asp-validation-for="EvacuationCenterStatus" class="text-danger small"></span>
-                </div>
-
-                <!-- Relief Distribution Status Dropdown -->
-                <div class="col-md-4">
-                    <label asp-for="ReliefDistributionStatus" class="form-label small fw-bold text-secondary">Relief Distribution</label>
-                    <select asp-for="ReliefDistributionStatus" class="form-select form-select-sm">
-                        <option value="Ongoing">Ongoing</option>
-                        <option value="Completed">Completed</option>
-                    </select>
-                    <span asp-validation-for="ReliefDistributionStatus" class="text-danger small"></span>
-                </div>
-
-                <!-- Operational Status Dropdown -->
-                <div class="col-md-4">
-                    <label asp-for="Status" class="form-label small fw-bold text-secondary">Operational Status</label>
-                    <select asp-for="Status" class="form-select form-select-sm">
-                        <option value="Active">Active</option>
-                        <option value="Resolved">Resolved</option>
-                    </select>
-                    <span asp-validation-for="Status" class="text-danger small"></span>
-                </div>
-            </div>
-
-            <!-- Situation Narrative -->
-            <div class="mb-4">
-                <label asp-for="Description" class="form-label small fw-bold text-secondary">Situation Report Narrative</label>
-                <textarea asp-for="Description" class="form-control form-control-sm" rows="4" placeholder="Ilarawan ang kasalukuyang sitwasyon o lawak ng pinsala..."></textarea>
-                <span asp-validation-for="Description" class="text-danger small"></span>
-            </div>
-
-            <!-- Form Actions -->
-            <div class="d-flex justify-content-between border-top pt-3">
-                <a asp-area="Staff" asp-controller="Disasters" asp-action="Index" class="btn btn-sm btn-outline-secondary px-3">
-                    <i class="bi bi-arrow-left"></i> Cancel
-                </a>
-                <button type="submit" class="btn btn-sm btn-primary px-4 fw-semibold">
-                    <i class="bi bi-save"></i> Save Changes
-                </button>
-            </div>
-        </form>
+            </form>
+        </div>
     </div>
 </div>
 
