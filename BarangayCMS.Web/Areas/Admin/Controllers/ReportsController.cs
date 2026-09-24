@@ -86,12 +86,7 @@ namespace BarangayCMS.Web.Areas.Admin.Controllers
 
             int newResidentsThisMonth = residentsData.LastOrDefault();
 
-            // ==========================================================
-            // 🧮 DEMOGRAPHIC ANALYTICS — galing sa AKTWAL na resident records
-            // (BirthDate + IsPwd) at kinakalkula base sa klasipikasyon ng edad.
-            //   Child : 0-14 | Youth : 15-30 | Adult : 31-59 | Senior : 60+
-            // Awtomatikong nag-uupdate tuwing may Add/Edit/Delete sa Residents.
-            // ==========================================================
+            // DEMOGRAPHIC ANALYTICS
             var demographics = await _context.Residents
                 .Where(r => r.IsResident)
                 .Select(r => new { r.BirthDate, r.IsPwd })
@@ -118,7 +113,6 @@ namespace BarangayCMS.Web.Areas.Admin.Controllers
 
             var dashboardData = new ReportsDashboardViewModel
             {
-                // 🧮 Demographic KPI + chart data
                 TotalRegisteredPopulation = demographics.Count,
                 YouthPopulation = youthCount,
                 SeniorCitizenPopulation = seniorCount,
@@ -152,29 +146,8 @@ namespace BarangayCMS.Web.Areas.Admin.Controllers
         }
 
         // ==========================================
-        // 2. EXPORT PDF / PRINT ACTION
+        // 2. SUB-MODULE REPORTS
         // ==========================================
-        [HttpGet]
-        public async Task<IActionResult> Export()
-        {
-            var dashboardData = new ReportsDashboardViewModel
-            {
-                TotalResidents = await _context.Residents.CountAsync(r => r.IsResident),
-                TotalComplaints = await _context.Complaints.CountAsync(),
-                TotalBudget = await _context.Budgets.SumAsync(b => (decimal?)b.TotalAllocation) ?? 0m,
-                ActiveProjects = await _context.Projects.CountAsync(p => p.Status != "Completed"),
-                TotalCertificatesIssued = await _context.Certificates.CountAsync(c => c.Status == "Issued" || c.Status == "Approved"),
-                ActiveEvacuees = await _context.Disasters.SumAsync(d => (int?)d.DisplacedIndividualsCount) ?? 0,
-                TotalHealthRecords = await _context.HealthRecords.CountAsync()
-            };
-
-            return View("ExportPdf", dashboardData);
-        }
-
-        // ==========================================
-        // 3. DETAILED SUB-MODULE REPORTS (DATA MATRIX)
-        // ==========================================
-
         public async Task<IActionResult> Residents()
         {
             var data = await _context.Residents

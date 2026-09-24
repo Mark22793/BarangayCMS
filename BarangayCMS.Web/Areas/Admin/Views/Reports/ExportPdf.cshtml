@@ -2,206 +2,305 @@
 @{
     Layout = null;
 }
-
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="utf-8" />
-    <title>Barangay CMS - Executive Summary Report</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Barangay Management System - Executive Analytics Report</title>
+    <!-- HTML2PDF CDN -->
     <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.3/dist/html2pdf.bundle.min.js"></script>
     <style>
         @@page {
             size: A4 portrait;
-            margin: 15mm;
+            margin: 10mm;
         }
-        * { box-sizing: border-box; }
+
+        * {
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            font-family: Arial, sans-serif;
             color: #0f172a;
             margin: 0;
-            padding: 24px;
+            padding: 20px;
             background-color: #ffffff;
+            font-size: 11px;
         }
-        
+
+        /* 🔘 TOP ACTION BAR (ITATAGO SA PRINT) */
         .no-print-bar {
             background-color: #f8fafc;
-            border: 1px solid #e2e8f0;
+            border: 1px solid #cbd5e1;
             padding: 12px 16px;
             border-radius: 8px;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
+
         .btn-print {
             background-color: #2563eb;
             color: #ffffff;
             border: none;
             padding: 8px 16px;
-            font-size: 13px;
-            font-weight: 600;
+            font-size: 12px;
+            font-weight: 700;
             border-radius: 6px;
             cursor: pointer;
         }
+
         .btn-print:hover { background-color: #1d4ed8; }
+
         .btn-back {
             background-color: #64748b;
             color: #ffffff;
             border: none;
             padding: 8px 16px;
-            font-size: 13px;
-            font-weight: 600;
+            font-size: 12px;
+            font-weight: 700;
             border-radius: 6px;
             cursor: pointer;
             margin-left: 8px;
             text-decoration: none;
             display: inline-block;
         }
+
         .btn-back:hover { background-color: #475569; }
-        
+
+        /* 📄 OFFICIAL REPORT HEADER */
         .report-header {
             text-align: center;
             border-bottom: 2px solid #0f172a;
-            padding-bottom: 16px;
-            margin-bottom: 24px;
+            padding-bottom: 12px;
+            margin-bottom: 16px;
         }
+
         .brand-name {
-            font-size: 22px;
+            font-size: 20px;
             font-weight: 800;
             letter-spacing: 0.5px;
             text-transform: uppercase;
             margin: 0 0 4px 0;
             color: #0f172a;
         }
+
         .report-subtitle {
-            font-size: 13px;
-            color: #475569;
-            font-weight: 600;
+            font-size: 12px;
+            color: #334155;
+            font-weight: 700;
             text-transform: uppercase;
-            margin: 0 0 6px 0;
+            margin: 0 0 4px 0;
         }
+
         .report-date {
-            font-size: 11px;
-            color: #94a3b8;
+            font-size: 10px;
+            color: #64748b;
             margin: 0;
         }
 
+        /* 📌 SECTIONS & METRICS GRID */
         .section-title {
-            font-size: 12px;
-            font-weight: 700;
+            font-size: 11px;
+            font-weight: 800;
             text-transform: uppercase;
             color: #0f172a;
             border-left: 4px solid #2563eb;
-            padding-left: 10px;
-            margin-bottom: 14px;
+            padding-left: 8px;
+            margin: 16px 0 10px 0;
         }
 
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 16px;
+            background: #f8fafc;
+            padding: 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+        }
+
+        .metric-item {
+            text-align: center;
+            padding: 6px;
+        }
+
+        .metric-item .label {
+            font-size: 9px;
+            text-transform: uppercase;
+            color: #64748b;
+            font-weight: 700;
+            display: block;
+        }
+
+        .metric-item .value {
+            font-size: 14px;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        /* 📊 PRINTABLE TABLES */
         .styled-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 8px;
+            margin-bottom: 12px;
         }
+
         .styled-table th {
             background-color: #0f172a;
             color: #ffffff;
             text-align: left;
-            padding: 10px 14px;
-            font-size: 11px;
+            padding: 6px 10px;
+            font-size: 10px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
-        .styled-table th.text-end { text-align: right; }
+
+        .styled-table th.text-end, 
+        .styled-table td.text-end { text-align: right; }
+
         .styled-table td {
-            padding: 12px 14px;
+            padding: 6px 10px;
             border-bottom: 1px solid #e2e8f0;
-            font-size: 13px;
+            font-size: 11px;
             color: #334155;
         }
+
         .styled-table tr:nth-child(even) td { background-color: #f8fafc; }
+
         .styled-table td.val-bold {
             font-weight: 700;
-            text-align: right;
             color: #0f172a;
         }
 
+        /* 🔏 FOOTER */
         .report-footer {
-            margin-top: 40px;
-            padding-top: 16px;
+            margin-top: 24px;
+            padding-top: 12px;
             border-top: 1px dashed #cbd5e1;
             text-align: center;
-            font-size: 11px;
-            color: #94a3b8;
+            font-size: 10px;
+            color: #64748b;
         }
 
+        /* 🖨️ MEDIA PRINT GUARDS */
         @@media print {
             .no-print-bar { display: none !important; }
-            body { padding: 0; }
+            body { padding: 0; background: #fff; }
+            .metrics-grid { background: #fff !important; border: 1px solid #cbd5e1 !important; }
         }
     </style>
 </head>
 <body>
 
+    <!-- CONTROL BAR FOR SCREEN VIEW -->
     <div class="no-print-bar">
         <div>
             <button id="btnDownload" class="btn-print">⬇️ Download PDF Again</button>
-            <button id="btnClose" class="btn-back">⬅️ Bumalik sa Reports</button>
+            <a href="/Admin/Reports" class="btn-back">⬅️ Bumalik sa Reports</a>
         </div>
-        <span id="statusText" style="font-size: 12px; color: #64748b;">Inihahanda ang iyong PDF download...</span>
+        <span id="statusText" style="font-size: 11px; color: #64748b; font-weight: 600;">Inihahanda ang iyong PDF download...</span>
     </div>
 
+    <!-- DOCUMENT WRAPPER (PDF CONTENT CANVAS) -->
     <div id="reportContent">
-    <div class="report-header">
-        <h1 class="brand-name">Barangay Management System</h1>
-        <div class="report-subtitle">Executive Analytics & Summary Report</div>
-        <p class="report-date">Generated on: @DateTime.Now.ToString("MMMM dd, yyyy - hh:mm tt")</p>
+        <!-- 1. HEADER -->
+        <div class="report-header">
+            <h1 class="brand-name">Barangay Tatalon Management System</h1>
+            <div class="report-subtitle">Executive Analytics & Management Report</div>
+            <p class="report-date">Generated: @DateTime.Now.ToString("MMMM dd, yyyy • hh:mm tt")</p>
+        </div>
+
+        <!-- 2. KEY SYSTEM INDICATORS (METRICS SUMMARY) -->
+        <div class="section-title">1. Key System Indicators</div>
+        <div class="metrics-grid">
+            <div class="metric-item">
+                <span class="label">Registered Residents</span>
+                <span class="value">@Model.TotalResidents</span>
+            </div>
+            <div class="metric-item">
+                <span class="label">Incident Cases</span>
+                <span class="value">@Model.TotalComplaints</span>
+            </div>
+            <div class="metric-item">
+                <span class="label">Certificates Issued</span>
+                <span class="value">@Model.TotalCertificatesIssued</span>
+            </div>
+            <div class="metric-item">
+                <span class="label">Active Projects</span>
+                <span class="value">@Model.ActiveProjects</span>
+            </div>
+            <div class="metric-item">
+                <span class="label">Approved Budget</span>
+                <span class="value">₱@Model.TotalBudget.ToString("N2")</span>
+            </div>
+            <div class="metric-item">
+                <span class="label">Active Evacuees</span>
+                <span class="value">@Model.ActiveEvacuees</span>
+            </div>
+            <div class="metric-item">
+                <span class="label">Health Records</span>
+                <span class="value">@Model.TotalHealthRecords</span>
+            </div>
+            <div class="metric-item">
+                <span class="label">Report Status</span>
+                <span class="value text-success">CURRENT</span>
+            </div>
+        </div>
+
+        <!-- 3. DETAILED METRICS OVERVIEW -->
+        <div class="section-title">2. Consolidated System Metrics</div>
+        <table class="styled-table">
+            <thead>
+                <tr>
+                    <th>Metric Category</th>
+                    <th class="text-end">Current Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Total Registered Residents</td>
+                    <td class="val-bold text-end">@Model.TotalResidents</td>
+                </tr>
+                <tr>
+                    <td>Total Blotter & Incident Cases Logged</td>
+                    <td class="val-bold text-end">@Model.TotalComplaints</td>
+                </tr>
+                <tr>
+                    <td>Total Approved Budget Allocation</td>
+                    <td class="val-bold text-end">₱@Model.TotalBudget.ToString("N2")</td>
+                </tr>
+                <tr>
+                    <td>Total Official Certificates Issued</td>
+                    <td class="val-bold text-end">@Model.TotalCertificatesIssued</td>
+                </tr>
+                <tr>
+                    <td>Active / Ongoing Infrastructure Projects</td>
+                    <td class="val-bold text-end">@Model.ActiveProjects</td>
+                </tr>
+                <tr>
+                    <td>Active Evacuees Logged</td>
+                    <td class="val-bold text-end">@Model.ActiveEvacuees</td>
+                </tr>
+                <tr>
+                    <td>Total Health Center Records</td>
+                    <td class="val-bold text-end">@Model.TotalHealthRecords</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- 4. OFFICIAL FOOTER -->
+        <div class="report-footer">
+            <strong>OFFICIAL SYSTEM-GENERATED REPORT</strong><br />
+            This report contains administrative information generated from official records maintained within the Barangay Management System. Data should be reviewed by authorized personnel before official distribution.
+        </div>
     </div>
 
-    <div class="section-title">System Metrics Overview</div>
-
-    <table class="styled-table">
-        <thead>
-            <tr>
-                <th>Metric Category</th>
-                <th class="text-end">Current Value</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>Total Registered Residents</td>
-                <td class="val-bold">@Model.TotalResidents</td>
-            </tr>
-            <tr>
-                <td>Total Blotter & Incident Cases Logged</td>
-                <td class="val-bold">@Model.TotalComplaints</td>
-            </tr>
-            <tr>
-                <td>Total Approved Budget Allocation</td>
-                <td class="val-bold">₱@Model.TotalBudget.ToString("N2")</td>
-            </tr>
-            <tr>
-                <td>Total Official Certificates Issued</td>
-                <td class="val-bold">@Model.TotalCertificatesIssued</td>
-            </tr>
-            <tr>
-                <td>Active / Ongoing Infrastructure Projects</td>
-                <td class="val-bold">@Model.ActiveProjects</td>
-            </tr>
-            <tr>
-                <td>Active Evacuees Logged</td>
-                <td class="val-bold">@Model.ActiveEvacuees</td>
-            </tr>
-            <tr>
-                <td>Total Health Center Records</td>
-                <td class="val-bold">@Model.TotalHealthRecords</td>
-            </tr>
-        </tbody>
-    </table>
-
-    <div class="report-footer">
-        This is an official system-generated executive summary document from BarangayCMS.
-    </div>
-    </div><!-- /#reportContent -->
-
+    <!-- ⚡ PDF GENERATION SCRIPT -->
     <script>
         (function () {
             var status = document.getElementById('statusText');
@@ -215,8 +314,8 @@
             function downloadPdf() {
                 var element = document.getElementById('reportContent');
                 var opt = {
-                    margin:       [10, 10, 10, 10],
-                    filename:     'Barangay_Executive_Summary_' + stamp() + '.pdf',
+                    margin:       [8, 8, 8, 8],
+                    filename:     'Barangay_Tatalon_Executive_Report_' + stamp() + '.pdf',
                     image:        { type: 'jpeg', quality: 0.98 },
                     html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
                     jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
@@ -224,13 +323,13 @@
                 };
 
                 if (typeof html2pdf === 'undefined') {
-                    // CDN unavailable — fall back to the browser's print-to-PDF dialog.
                     if (status) { status.textContent = 'Hindi ma-load ang PDF library — gagamitin ang Print dialog.'; }
                     window.print();
                     return;
                 }
 
                 if (status) { status.textContent = 'Ginagawa ang PDF... maghintay lamang.'; }
+                
                 html2pdf().set(opt).from(element).save().then(function () {
                     if (status) { status.textContent = 'Na-download na ang PDF sa iyong device. ✅'; }
                 }).catch(function () {
@@ -238,16 +337,12 @@
                 });
             }
 
-            // Awtomatikong i-download ang PDF pagkabukas ng pahina.
+            // Automatic trigger after loading
             window.addEventListener('load', function () {
-                setTimeout(downloadPdf, 400);
+                setTimeout(downloadPdf, 500);
             });
 
             document.getElementById('btnDownload').addEventListener('click', downloadPdf);
-
-            document.getElementById('btnClose').addEventListener('click', function () {
-                window.location.href = '/Admin/Reports';
-            });
         })();
     </script>
 </body>

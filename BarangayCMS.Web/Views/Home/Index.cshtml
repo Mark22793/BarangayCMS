@@ -4,11 +4,6 @@
 
 <!-- 🎠 HERO SECTION WITH SLIDING BACKGROUND CAROUSEL -->
 <section class="hero position-relative overflow-hidden">
-
-    <!-- 🖼️ BOOTSTRAP CAROUSEL BACKGROUND SLIDESHOW -->
-    <!-- Autoplay (3s) + manual arrows/indicators + hover-pause + keyboard + touch swipe
-         are all handled by the single Bootstrap carousel instance below.
-         Manual navigation restarts the auto timer (see Scripts). -->
     <div id="heroCarousel"
          class="carousel slide carousel-fade hero-carousel"
          data-bs-ride="carousel"
@@ -20,12 +15,6 @@
          aria-label="Barangay Tatalon highlights">
 
         <div class="carousel-inner">
-
-            @* Each photo slide shows the WHOLE image (object-fit: contain) so
-               nothing is cropped, with a blurred, zoomed copy of the same image
-               filling the band behind it — no empty side bars, no distortion. *@
-
-            <!-- SLIDE 1: Barangay background.jpg -->
             <div class="carousel-item active">
                 <div class="hero-slide">
                     <img src="/images/Barangay%20background.jpg" class="hero-slide__bg" alt="" aria-hidden="true">
@@ -33,7 +22,6 @@
                 </div>
             </div>
 
-            <!-- SLIDE 2: Kiko Del Mundo.jpg -->
             <div class="carousel-item">
                 <div class="hero-slide">
                     <img src="/images/Kiko%20Del%20Mundo.jpg" class="hero-slide__bg" alt="" aria-hidden="true">
@@ -41,7 +29,6 @@
                 </div>
             </div>
 
-            <!-- SLIDE 3: ALS.jpg -->
             <div class="carousel-item">
                 <div class="hero-slide">
                     <img src="/images/ALS.jpg" class="hero-slide__bg" alt="" aria-hidden="true">
@@ -49,7 +36,6 @@
                 </div>
             </div>
 
-            <!-- SLIDE 4: Kiko Del Mundo Campaign Election.jpg -->
             <div class="carousel-item">
                 <div class="hero-slide">
                     <img src="/images/Kiko%20Del%20Mundo%20Campaign%20Election.jpg" class="hero-slide__bg" alt="" aria-hidden="true">
@@ -57,16 +43,13 @@
                 </div>
             </div>
 
-            <!-- SLIDE 5: Progresibong_Tatalon logo (transparent PNG) on a solid brand backdrop -->
             <div class="carousel-item">
                 <div class="hero-slide hero-slide--logo">
                     <img src="/images/Progresibong_Tatalon__1_-removebg-preview.png" class="hero-slide__img" alt="Progresibong Tatalon Logo">
                 </div>
             </div>
-
         </div>
 
-        <!-- ⚪ Slide indicators / dots (one per slide) -->
         <div class="carousel-indicators">
             <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Go to slide 1"></button>
             <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="1" aria-label="Go to slide 2"></button>
@@ -75,7 +58,6 @@
             <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="4" aria-label="Go to slide 5"></button>
         </div>
 
-        <!-- ◀️ ▶️ Manual navigation controls -->
         <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev" aria-label="Previous slide">
             <span class="carousel-control-prev-icon" aria-hidden="true"></span>
             <span class="visually-hidden">Previous slide</span>
@@ -86,19 +68,14 @@
         </button>
     </div>
 
-    <!-- 📝 HERO CONTENT CONTAINER (sits above the darkened carousel) -->
+    <!-- 📝 HERO CONTENT CONTAINER -->
     <div class="hero__inner position-relative">
         <div class="hero__content">
-
-            <!-- 🏛️ Barangay Official Badge -->
             <div class="d-inline-flex align-items-center gap-2 px-3 py-1 mb-3 rounded-pill bg-white bg-opacity-10 border border-white border-opacity-25">
-
-                <!-- 🟢 BARANGAY TATALON EMBEDDED LOGO -->
                 <img id="brgyLogo"
                      src="/images/Barangay%20Tatalon%20Logo-modified.png"
                      alt="Brgy Tatalon Logo"
                      style="width: 28px; height: 28px; object-fit: contain; border-radius: 50%;" />
-
                 <span class="small fw-semibold text-light">Barangay Tatalon • District IV, Quezon City</span>
             </div>
 
@@ -192,7 +169,6 @@
         </div>
 
         <div class="modules">
-
             <article class="module">
                 <div class="module__top">
                     <span class="module__icon"><i class="bi bi-file-earmark-text" aria-hidden="true"></i></span>
@@ -252,21 +228,17 @@
                 </ul>
                 <a asp-controller="Account" asp-action="Login" class="module__link">Requires Login &rarr;</a>
             </article>
-
         </div>
     </div>
 </section>
 
+<!-- 🎨 THEME SWITCHER PARTIAL -->
 <partial name="_ThemeSwitcher" />
 
 @section Scripts {
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            if (window.BmsTheme && typeof window.BmsTheme.initSwitcher === 'function') {
-                window.BmsTheme.initSwitcher();
-            }
-
-            // AUTO-REPLACE FALLBACK KAPAG HINDI NABASA NG SERVER ANG SPACES SA FILENAME
+            // Auto-replace fallback for logo
             const brgyImg = document.getElementById("brgyLogo");
             if (brgyImg) {
                 brgyImg.onerror = function() {
@@ -274,23 +246,14 @@
                 };
             }
 
-            // 🎠 HERO CAROUSEL — reuse the single Bootstrap instance (no 2nd carousel).
-            // Bootstrap already gives auto-advance (3s), hover-pause, keyboard at touch.
-            // Idinadagdag lang natin ang timer-RESET pagkatapos ng manual navigation,
-            // para hindi biglang lumipat ang slide kaagad matapos mag-click ang user.
+            // Hero Carousel initialization
             const heroEl = document.getElementById("heroCarousel");
             if (heroEl && window.bootstrap && bootstrap.Carousel) {
                 const hero = bootstrap.Carousel.getOrCreateInstance(heroEl);
 
-                // Restart the auto timer after a manual control click. cycle() clears any
-                // existing interval first, kaya walang doble/overlapping na timer.
                 heroEl.querySelectorAll("[data-bs-slide], [data-bs-slide-to]").forEach(function (ctrl) {
                     ctrl.addEventListener("click", function () { hero.cycle(); });
                 });
-
-                // I-pause habang hinahawakan sa touch device; ituloy pagkatapos.
-                heroEl.addEventListener("touchstart", function () { hero.pause(); }, { passive: true });
-                heroEl.addEventListener("touchend", function () { hero.cycle(); }, { passive: true });
             }
         });
     </script>

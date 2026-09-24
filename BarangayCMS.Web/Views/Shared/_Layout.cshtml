@@ -179,99 +179,118 @@
         </div>
     </footer>
 
-    <!-- ⬆️ BACK TO TOP BUTTON -->
+    <!-- ⬆️ BACK TO TOP BUTTON (Lalabas lang kapag nag-scroll down) -->
     <button id="backToTopBtn" type="button" class="back-to-top-btn" title="Bumalik sa Itaas" onclick="scrollToTop()">
         <i class="bi bi-arrow-up"></i>
     </button>
 
-    <!-- 🎨 THEME / APPEARANCE SWITCHER PARTIAL (Para lumabas sa LAHAT ng pahina at sub-menus) -->
+    <!-- 🎨 THEME / APPEARANCE SWITCHER PARTIAL -->
     <partial name="_ThemeSwitcher" />
 
     <style>
-        /* Footer Links */
-        .footer-link {
-            color: #e2e8f0 !important;
-            text-decoration: none;
-            transition: all 0.2s ease-in-out;
-        }
+            /* Footer Links */
+            .footer-link {
+                color: #e2e8f0 !important;
+                text-decoration: none;
+                transition: all 0.2s ease-in-out;
+            }
 
-        .footer-link:hover {
-            color: #38bdf8 !important;
-            text-decoration: underline;
-        }
+                .footer-link:hover {
+                    color: #38bdf8 !important;
+                    text-decoration: underline;
+                }
 
-        /* ----------------------------------------------------
-           BACK TO TOP BUTTON (Naka-pwesto sa bottom: 85px para hindi matakpan ang Theme Switcher button)
-           ---------------------------------------------------- */
-        html body #backToTopBtn,
-        html body button#backToTopBtn,
-        html body .back-to-top-btn {
-            position: fixed !important;
-            bottom: 85px !important;
-            right: 30px !important;
-            width: 46px !important;
-            height: 46px !important;
-            padding: 0 !important;
-            margin: 0 !important;
-            border-radius: 50% !important;
-            background-color: #0f5132 !important; /* Solid Dark Green */
-            background-image: none !important;
-            color: #ffffff !important;
-            border: none !important;
-            outline: none !important;
-            
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25) !important;
-            filter: none !important;
-            backdrop-filter: none !important;
-            overflow: hidden !important;
-            
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            z-index: 99999 !important;
-            cursor: pointer !important;
-            transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease !important;
-        }
+            /* BACK TO TOP BUTTON STYLES */
+            html body #backToTopBtn,
+            html body button#backToTopBtn,
+            html body .back-to-top-btn {
+                position: fixed !important;
+                bottom: 30px !important;
+                right: 30px !important;
+                width: 46px !important;
+                height: 46px !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                border-radius: 50% !important;
+                background-color: #0f5132 !important;
+                background-image: none !important;
+                color: #ffffff !important;
+                border: none !important;
+                outline: none !important;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25) !important;
+                filter: none !important;
+                backdrop-filter: none !important;
+                overflow: hidden !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                z-index: 99999 !important;
+                cursor: pointer !important;
+                opacity: 0 !important;
+                visibility: hidden !important;
+                transform: translateY(20px) !important;
+                transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease, background-color 0.2s ease, box-shadow 0.2s ease !important;
+            }
 
-        html body #backToTopBtn::before,
-        html body #backToTopBtn::after,
-        html body .back-to-top-btn::before,
-        html body .back-to-top-btn::after {
-            content: none !important;
-            display: none !important;
-        }
+                /* Show Button Class */
+                html body #backToTopBtn.visible,
+                html body .back-to-top-btn.visible {
+                    opacity: 1 !important;
+                    visibility: visible !important;
+                    transform: translateY(0) !important;
+                }
 
-        /* Hover Effect */
-        html body #backToTopBtn:hover,
-        html body .back-to-top-btn:hover {
-            background-color: #146c43 !important;
-            color: #ffffff !important;
-            transform: translateY(-3px) !important;
-            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35) !important;
-        }
+                html body #backToTopBtn::before,
+                html body #backToTopBtn::after,
+                html body .back-to-top-btn::before,
+                html body .back-to-top-btn::after {
+                    content: none !important;
+                    display: none !important;
+                }
 
-        /* Icon Fix */
-        html body #backToTopBtn i,
-        html body .back-to-top-btn i {
-            display: inline-block !important;
-            color: #ffffff !important;
-            font-size: 1.25rem !important;
-            line-height: 1 !important;
-            margin: 0 !important;
-            padding: 0 !important;
-        }
+                /* Hover Effect */
+                html body #backToTopBtn.visible:hover,
+                html body .back-to-top-btn.visible:hover {
+                    background-color: #146c43 !important;
+                    color: #ffffff !important;
+                    transform: translateY(-3px) !important;
+                    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35) !important;
+                }
+
+                /* Icon Fix */
+                html body #backToTopBtn i,
+                html body .back-to-top-btn i {
+                    display: inline-block !important;
+                    color: #ffffff !important;
+                    font-size: 1.25rem !important;
+                    line-height: 1 !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                }
     </style>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/form-persist.js" asp-append-version="true"></script>
 
     <script>
-        function scrollToTop() {
-            window.scrollTo({
-                top: 0,
-                behavior: 'smooth'
+            function scrollToTop() {
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+            }
+
+            // Script para sa Scroll to Top Arrow
+            window.addEventListener('scroll', function () {
+                var backToTopBtn = document.getElementById('backToTopBtn');
+                if (backToTopBtn) {
+                    if (window.scrollY > 300) {
+                        backToTopBtn.classList.add('visible');
+                    } else {
+                        backToTopBtn.classList.remove('visible');
+                    }
+                }
             });
-        }
     </script>
 
     @await RenderSectionAsync("Scripts", required: false)

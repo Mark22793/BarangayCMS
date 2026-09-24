@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace BarangayCMS.Web.Areas.Admin.Models
 {
@@ -20,13 +21,12 @@ namespace BarangayCMS.Web.Areas.Admin.Models
         public string Location { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Ang petsa at oras ay kinakailangan.")]
-        [DataType(DataType.DateTime)]
         [Display(Name = "Petsa at Oras ng Pangyayari")]
-        public DateTime DateOccurred { get; set; } = DateTime.Now;
+        public DateTime DateOccurred { get; set; }
 
         [Required]
         [MaxLength(30)]
         [Display(Name = "Status ng Sitwasyon")]
-        public string Status { get; set; } = "Active"; // Active, Controlled, Resolved, Cleared
+        public string Status { get; set; } = "Active";
     }
 }

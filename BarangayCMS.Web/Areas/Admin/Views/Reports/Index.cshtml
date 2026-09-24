@@ -5,8 +5,9 @@
     ViewData["Title"] = "System Analytical Reports";
 }
 
-<!-- CDN FOR CHART.JS -->
+<!-- CDN FOR CHART.JS AT HTML2PDF -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <style>
     .btn-export-pdf {
@@ -16,12 +17,12 @@
         transition: all 0.3s ease;
     }
 
-        .btn-export-pdf:hover {
-            background-color: #dc3545 !important;
-            border-color: #dc3545 !important;
-            color: #ffffff !important;
-            box-shadow: 0 4px 10px rgba(220, 53, 69, 0.35);
-        }
+    .btn-export-pdf:hover {
+        background-color: #dc3545 !important;
+        border-color: #dc3545 !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 10px rgba(220, 53, 69, 0.35);
+    }
 
     .trend-badge {
         font-size: 0.75rem;
@@ -40,9 +41,10 @@
         <p class="text-muted small mb-0">Compile demographic, safety incidents, and general transaction report datasets.</p>
     </div>
 
-    <a asp-area="Admin" asp-controller="Reports" asp-action="Export" class="btn btn-export-pdf shadow-sm">
+    <!-- DIRECT PDF DOWNLOAD BUTTON -->
+    <button type="button" onclick="downloadPDF()" class="btn btn-export-pdf shadow-sm">
         <i class="bi bi-download me-1"></i> Export PDF Summary
-    </a>
+    </button>
 </div>
 
 <!-- MGA ANALYTICAL COUNTERS -->
@@ -140,16 +142,13 @@
     </div>
 </div>
 
-<!-- ========================================================= -->
-<!-- 🧮 EXECUTIVE DEMOGRAPHIC ANALYTICS (database-driven) -->
-<!-- ========================================================= -->
+<!-- DEMOGRAPHIC ANALYTICS -->
 <div class="d-flex align-items-center mb-3">
     <h5 class="fw-bold text-dark mb-0"><i class="bi bi-people text-primary me-2"></i>Demographic Analytics</h5>
     <span class="badge bg-light text-dark small ms-2">Live mula sa Resident Records</span>
 </div>
 
 <div class="row g-3 mb-4">
-    <!-- Total Registered Population -->
     <div class="col-md-3">
         <div class="card border-0 shadow-sm p-3 bg-white h-100">
             <div class="d-flex align-items-center justify-content-between">
@@ -161,7 +160,6 @@
             </div>
         </div>
     </div>
-    <!-- Youth Population -->
     <div class="col-md-3">
         <div class="card border-0 shadow-sm p-3 bg-white h-100">
             <div class="d-flex align-items-center justify-content-between">
@@ -174,7 +172,6 @@
             <small class="text-muted mt-2">Edad 15–30 (SK)</small>
         </div>
     </div>
-    <!-- Senior Citizen Population -->
     <div class="col-md-3">
         <div class="card border-0 shadow-sm p-3 bg-white h-100">
             <div class="d-flex align-items-center justify-content-between">
@@ -187,7 +184,6 @@
             <small class="text-muted mt-2">Edad 60 pataas</small>
         </div>
     </div>
-    <!-- PWD Population -->
     <div class="col-md-3">
         <div class="card border-0 shadow-sm p-3 bg-white h-100">
             <div class="d-flex align-items-center justify-content-between">
@@ -203,7 +199,6 @@
 </div>
 
 <div class="row g-3 mb-4">
-    <!-- Bar Chart: Population Distribution by Age Group -->
     <div class="col-lg-7">
         <div class="card border-0 shadow-sm p-3 bg-white h-100">
             <div class="d-flex justify-content-between align-items-center mb-3">
@@ -213,7 +208,6 @@
             <div style="min-height: 280px; height: 280px;"><canvas id="ageGroupChart"></canvas></div>
         </div>
     </div>
-    <!-- Doughnut: Youth vs Senior vs PWD vs General -->
     <div class="col-lg-5">
         <div class="card border-0 shadow-sm p-3 bg-white h-100">
             <div class="d-flex justify-content-between align-items-center mb-3">
@@ -224,9 +218,8 @@
     </div>
 </div>
 
-<!-- 📊 VISUAL CHARTS SECTION (MONTHLY TRENDS) -->
+<!-- VISUAL CHARTS SECTION (MONTHLY TRENDS) -->
 <div class="row g-3 mb-4">
-    <!-- Line Graph: Monthly Complaints vs Resident Registration Growth -->
     <div class="col-lg-7">
         <div class="card border-0 shadow-sm p-3 bg-white h-100">
             <div class="d-flex justify-content-between align-items-center mb-3">
@@ -241,7 +234,6 @@
         </div>
     </div>
 
-    <!-- Bar Chart: Monthly Certificates Issued -->
     <div class="col-lg-5">
         <div class="card border-0 shadow-sm p-3 bg-white h-100">
             <div class="d-flex justify-content-between align-items-center mb-3">
@@ -279,15 +271,136 @@
     </div>
 </div>
 
-<!-- 📊 CHART.JS RENDERING SCRIPT -->
+<!-- ========================================================= -->
+<!-- 📄 HIDDEN PDF TEMPLATE (EKSAKTONG FORMAT MULA SA TEMPLATE MO) -->
+<!-- ========================================================= -->
+<div style="display: none;">
+    <div id="pdf-report-template" style="width: 750px; padding: 40px; font-family: Arial, sans-serif; color: #111827; background-color: #ffffff; line-height: 1.4;">
+        
+        <!-- HEADER -->
+        <div style="text-align: center; margin-bottom: 15px;">
+            <h1 style="font-size: 20px; font-weight: 800; margin: 0; color: #000000; text-transform: uppercase;">BARANGAY TATALON</h1>
+            <h2 style="font-size: 18px; font-weight: 700; margin: 2px 0 0 0; color: #000000; text-transform: uppercase;">MANAGEMENT SYSTEM</h2>
+            <div style="font-size: 12px; font-weight: 800; color: #374151; margin-top: 6px; text-transform: uppercase; letter-spacing: 0.5px;">EXECUTIVE ANALYTICS & MANAGEMENT REPORT</div>
+            <div style="font-size: 10px; color: #4b5563; margin-top: 4px;">
+                Generated: @DateTime.Now.ToString("MMMM dd, yyyy • h:mm tt")
+            </div>
+        </div>
+
+        <hr style="border: 0; border-top: 1.5px solid #000000; margin: 10px 0 15px 0;" />
+
+        <!-- 1. EXECUTIVE SUMMARY -->
+        <div style="font-size: 11px; font-weight: 800; color: #000000; margin-bottom: 4px; text-transform: uppercase;">1. EXECUTIVE SUMMARY</div>
+        <p style="font-size: 10px; color: #374151; margin: 0 0 15px 0; text-align: justify;">
+            This report provides a consolidated overview of administrative, demographic, document-processing, financial, health, disaster, and incident records maintained within the Barangay Management System. The information is intended to support authorized barangay personnel in monitoring current operational records.
+        </p>
+
+        <!-- 2. KEY SYSTEM INDICATORS -->
+        <div style="font-size: 11px; font-weight: 800; color: #000000; margin-bottom: 6px; text-transform: uppercase;">2. KEY SYSTEM INDICATORS</div>
+        <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 8px 12px; font-size: 9.5px; font-weight: 700; color: #1e293b; margin-bottom: 15px; line-height: 1.8;">
+            REGISTERED RESIDENTS @Model.TotalResidents &nbsp;|&nbsp; INCIDENT CASES @Model.TotalComplaints &nbsp;|&nbsp; CERTIFICATES ISSUED @Model.TotalCertificatesIssued &nbsp;|&nbsp; ACTIVE PROJECTS @Model.ActiveProjects<br />
+            APPROVED BUDGET ₱@Model.TotalBudget.ToString("N2") &nbsp;|&nbsp; ACTIVE EVACUEES @Model.ActiveEvacuees &nbsp;|&nbsp; HEALTH RECORDS @Model.TotalHealthRecords &nbsp;|&nbsp; REPORT STATUS CURRENT
+        </div>
+
+        <!-- 3. RESIDENT & DEMOGRAPHIC OVERVIEW -->
+        <div style="font-size: 11px; font-weight: 800; color: #000000; margin-bottom: 6px; text-transform: uppercase;">3. RESIDENT & DEMOGRAPHIC OVERVIEW</div>
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 10px;">
+            <thead>
+                <tr style="border-bottom: 1px solid #000000; text-align: left;">
+                    <th style="padding: 4px 0; font-weight: 800;">Category</th>
+                    <th style="padding: 4px 0; font-weight: 800;">Count</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr style="border-bottom: 1px solid #f1f5f9;">
+                    <td style="padding: 4px 0;">Total Registered Population</td>
+                    <td style="padding: 4px 0; font-weight: 700;">@Model.TotalRegisteredPopulation</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #f1f5f9;">
+                    <td style="padding: 4px 0;">Youth Population (15-30)</td>
+                    <td style="padding: 4px 0; font-weight: 700;">@Model.YouthPopulation</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #f1f5f9;">
+                    <td style="padding: 4px 0;">Senior Citizen Population (60+)</td>
+                    <td style="padding: 4px 0; font-weight: 700;">@Model.SeniorCitizenPopulation</td>
+                </tr>
+                <tr>
+                    <td style="padding: 4px 0;">PWD Population</td>
+                    <td style="padding: 4px 0; font-weight: 700;">@Model.PwdPopulation</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- 4. SYSTEM METRICS SUMMARY -->
+        <div style="font-size: 11px; font-weight: 800; color: #000000; margin-bottom: 6px; text-transform: uppercase;">4. SYSTEM METRICS SUMMARY</div>
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px; font-size: 10px;">
+            <thead>
+                <tr style="border-bottom: 1px solid #000000; text-align: left;">
+                    <th style="padding: 4px 0; font-weight: 800;">Module Category</th>
+                    <th style="padding: 4px 0; font-weight: 800; text-align: right;">Database Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr style="border-bottom: 1px solid #f1f5f9;">
+                    <td style="padding: 4px 0;">Total Registered Residents</td>
+                    <td style="padding: 4px 0; text-align: right; font-weight: 700;">@Model.TotalResidents</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #f1f5f9;">
+                    <td style="padding: 4px 0;">Total Blotter Cases / Complaints</td>
+                    <td style="padding: 4px 0; text-align: right; font-weight: 700;">@Model.TotalComplaints</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #f1f5f9;">
+                    <td style="padding: 4px 0;">Total Certificates Issued</td>
+                    <td style="padding: 4px 0; text-align: right; font-weight: 700;">@Model.TotalCertificatesIssued</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #f1f5f9;">
+                    <td style="padding: 4px 0;">Approved Allocated Budget</td>
+                    <td style="padding: 4px 0; text-align: right; font-weight: 700;">₱@Model.TotalBudget.ToString("N2")</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #f1f5f9;">
+                    <td style="padding: 4px 0;">Active Infrastructure Projects</td>
+                    <td style="padding: 4px 0; text-align: right; font-weight: 700;">@Model.ActiveProjects</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #f1f5f9;">
+                    <td style="padding: 4px 0;">Active Evacuees Monitored</td>
+                    <td style="padding: 4px 0; text-align: right; font-weight: 700;">@Model.ActiveEvacuees</td>
+                </tr>
+                <tr>
+                    <td style="padding: 4px 0;">Total Health Center Records Logged</td>
+                    <td style="padding: 4px 0; text-align: right; font-weight: 700;">@Model.TotalHealthRecords</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- FOOTER -->
+        <div style="text-align: center; border-top: 1px solid #e5e7eb; padding-top: 12px; font-size: 9px; color: #6b7280;">
+            <div style="font-weight: 800; color: #374151; text-transform: uppercase; margin-bottom: 2px;">OFFICIAL SYSTEM-GENERATED REPORT</div>
+            This report contains administrative information generated from records maintained within the system. Data should be reviewed by authorized barangay personnel before official use.
+        </div>
+
+    </div>
+</div>
+
+<!-- SCRIPTS FOR CHARTS & DIRECT PDF GENERATION -->
 <script>
+    function downloadPDF() {
+        const element = document.getElementById('pdf-report-template');
+        const opt = {
+            margin:       [0.4, 0.4, 0.4, 0.4],
+            filename:     'Barangay_CMS_Executive_Report.pdf',
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, logging: false },
+            jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+        };
+        html2pdf().set(opt).from(element).save();
+    }
+
     document.addEventListener("DOMContentLoaded", function () {
         const labelsArray = @Html.Raw(Json.Serialize(Model.Months));
         const complaintsData = @Html.Raw(Json.Serialize(Model.MonthlyComplaints));
         const certificatesData = @Html.Raw(Json.Serialize(Model.MonthlyCertificates));
         const residentsData = @Html.Raw(Json.Serialize(Model.MonthlyResidents));
 
-        // 🧮 DEMOGRAPHIC DATA (database-driven)
         const ageGroupLabels = @Html.Raw(Json.Serialize(Model.AgeGroupLabels));
         const ageGroupCounts = @Html.Raw(Json.Serialize(Model.AgeGroupCounts));
         const youthPop = @Model.YouthPopulation;
@@ -296,7 +409,7 @@
         const totalPop = @Model.TotalRegisteredPopulation;
         const generalPop = Math.max(0, totalPop - youthPop - seniorPop);
 
-        // Bar Chart: Population Distribution by Age Group
+        // Bar Chart: Age Group
         const ctxAge = document.getElementById('ageGroupChart').getContext('2d');
         new Chart(ctxAge, {
             type: 'bar',
@@ -317,7 +430,7 @@
             }
         });
 
-        // Doughnut: Demographic Classification (Youth / Senior / PWD / General)
+        // Doughnut: Demographic
         const ctxDemo = document.getElementById('demographicChart').getContext('2d');
         new Chart(ctxDemo, {
             type: 'doughnut',
@@ -335,7 +448,7 @@
             }
         });
 
-        // 1. Line Chart para sa Complaints at Resident Growth
+        // Line Chart: Trends
         const ctxTrend = document.getElementById('monthlyTrendChart').getContext('2d');
         new Chart(ctxTrend, {
             type: 'line',
@@ -367,16 +480,12 @@
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: {
-                    legend: { position: 'top' }
-                },
-                scales: {
-                    y: { beginAtZero: true, ticks: { stepSize: 1 } }
-                }
+                plugins: { legend: { position: 'top' } },
+                scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
             }
         });
 
-        // 2. Bar Chart para sa Certificates Issued
+        // Bar Chart: Certificates
         const ctxCert = document.getElementById('certificatesChart').getContext('2d');
         new Chart(ctxCert, {
             type: 'bar',
@@ -394,12 +503,8 @@
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false }
-                },
-                scales: {
-                    y: { beginAtZero: true, ticks: { stepSize: 1 } }
-                }
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
             }
         });
     });

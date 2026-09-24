@@ -5,22 +5,31 @@
     ViewData["Title"] = "Staff Analytical Reports";
 }
 
-<!-- 🔴 RED HOVER EFFECT STYLE -->
+<!-- HTML2PDF CDN -->
+<script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.3/dist/html2pdf.bundle.min.js"></script>
+
 <style>
     .btn-export-pdf {
-        background-color: #212529; /* Dati nitong kulay (Itim/Dark) */
+        background-color: #212529;
         color: #ffffff;
         border: 1px solid #212529;
         transition: all 0.3s ease;
     }
 
-        /* Magiging Kulay Pula kapag itinutok ang cursor/arrow */
-        .btn-export-pdf:hover {
-            background-color: #dc3545 !important; /* Red */
-            border-color: #dc3545 !important;
-            color: #ffffff !important;
-            box-shadow: 0 4px 10px rgba(220, 53, 69, 0.35); /* Red Glow Effect */
-        }
+    .btn-export-pdf:hover {
+        background-color: #dc3545 !important;
+        border-color: #dc3545 !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 10px rgba(220, 53, 69, 0.35);
+    }
+
+    /* Print Template Container Styling */
+    #pdfPrintContainer {
+        font-family: Arial, sans-serif;
+        color: #0f172a;
+        padding: 20px;
+        background: #ffffff;
+    }
 </style>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -31,10 +40,10 @@
         <p class="text-muted small mb-0">Compile demographic, safety incidents, and general transaction report datasets.</p>
     </div>
 
-    <!-- 🔴 UPDATE: PINALITAN ANG CLASS NG btn-export-pdf -->
-    <a asp-area="Staff" asp-controller="Reports" asp-action="Export" class="btn btn-export-pdf shadow-sm">
+    <!-- 🔘 PINALITAN: BUTTON NA NAGTETRIGGER NG MODAL SA HALIP NA MAG-REDIRECT -->
+    <button type="button" class="btn btn-export-pdf shadow-sm" data-bs-toggle="modal" data-bs-target="#pdfExportModal">
         <i class="bi bi-download me-1"></i> Export PDF Summary
-    </a>
+    </button>
 </div>
 
 <!-- MGA ANALYTICAL COUNTERS -->
@@ -137,3 +146,107 @@
         <p class="small text-muted mb-0">Maaari mong piliin ang mga dataset sa itaas o i-click ang <strong>Export PDF Summary</strong> para sa pangkalahatang ulat.</p>
     </div>
 </div>
+
+<!-- 📦 MODAL DIALOG PARA SA DOWNLOAD -->
+<div class="modal fade" id="pdfExportModal" tabindex="-1" aria-labelledby="pdfExportModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="pdfExportModalLabel"><i class="bi bi-file-pdf text-danger me-2"></i>Export Staff Executive Report</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <i class="bi bi-file-earmark-pdf text-danger display-3 mb-3"></i>
+                <p class="mb-1 fw-bold">Handa na ang iyong Executive Report.</p>
+                <p class="text-muted small">I-click ang button sa ibaba para simulan ang pag-download ng PDF file.</p>
+                <div id="downloadStatus" class="small fw-semibold text-primary mt-2" style="display:none;">
+                    Ginagawa ang PDF... maghintay lamang.
+                </div>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Isara</button>
+                <button type="button" id="btnModalDownload" onclick="generatePDFFromModal()" class="btn btn-danger btn-sm fw-bold">
+                    <i class="bi bi-download me-1"></i> Download PDF
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 📄 HIDDEN TEMPLATE PARA SA PDF GENERATION -->
+<div style="display: none;">
+    <div id="pdfPrintContainer">
+        <div style="text-align: center; border-bottom: 2px solid #0f172a; padding-bottom: 12px; margin-bottom: 16px;">
+            <h2 style="font-size: 18px; font-weight: 800; text-transform: uppercase; margin: 0; color: #0f172a;">Barangay Tatalon Management System</h2>
+            <div style="font-size: 11px; color: #334155; font-weight: 700; text-transform: uppercase; margin-top: 4px;">Sentro ng Pag-export ng Opisyal na Ulat (Staff Executive Report)</div>
+            <p style="font-size: 10px; color: #64748b; margin-top: 4px;">Petsa ng Pagbuo ng Ulat: @Model.GeneratedDate.ToString("MMMM dd, yyyy • hh:mm tt")</p>
+        </div>
+
+        <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; border-left: 4px solid #dc2626; padding-left: 8px; margin: 16px 0 10px 0;">1. Detalyadong Sukat ng Pamamahala</div>
+        
+        <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+            <thead>
+                <tr style="background-color: #0f172a; color: #ffffff;">
+                    <th style="padding: 8px 10px; font-size: 10px; text-align: left; text-transform: uppercase;">Kategorya ng Ulat / Sukat</th>
+                    <th style="padding: 8px 10px; font-size: 10px; text-align: right; text-transform: uppercase;">Kasalukuyang Bilang / Halaga</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr style="border-bottom: 1px solid #e2e8f0;">
+                    <td style="padding: 8px 10px; font-size: 11px;">Kabuuang Rehistradong Residente sa Barangay</td>
+                    <td style="padding: 8px 10px; font-size: 11px; text-align: right; font-weight: bold;">@Model.TotalResidents</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #e2e8f0; background-color: #f8fafc;">
+                    <td style="padding: 8px 10px; font-size: 11px;">Kabuuang Naipamahaging Opisyal na Sertipiko</td>
+                    <td style="padding: 8px 10px; font-size: 11px; text-align: right; font-weight: bold;">@Model.TotalCertificatesIssued</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #e2e8f0;">
+                    <td style="padding: 8px 10px; font-size: 11px;">Mga Aktibong Reklamo o Kaso ng Blotter na Inaasikaso</td>
+                    <td style="padding: 8px 10px; font-size: 11px; text-align: right; font-weight: bold;">@Model.ActiveComplaints</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #e2e8f0; background-color: #f8fafc;">
+                    <td style="padding: 8px 10px; font-size: 11px;">Aktibong Kaso ng Sakuna o Disaster Management Incidents</td>
+                    <td style="padding: 8px 10px; font-size: 11px; text-align: right; font-weight: bold;">@Model.ActiveDisasters</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #e2e8f0;">
+                    <td style="padding: 8px 10px; font-size: 11px;">Petsa at Oras ng Huling Pagproseso</td>
+                    <td style="padding: 8px 10px; font-size: 11px; text-align: right; font-weight: bold;">@Model.GeneratedDate.ToString("MMMM dd, yyyy - hh:mm tt")</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div style="margin-top: 30px; padding-top: 12px; border-top: 1px dashed #cbd5e1; text-align: center; font-size: 9px; color: #64748b;">
+            <strong>OPISYAL NA ULAT MULA SA BARANGAY MANAGEMENT SYSTEM (STAFF MODULE)</strong><br />
+            Ang dokumentong ito ay awtomatikong binuo mula sa opisyal na talaan ng Barangay Tatalon para sa ebalwasyon ng pamahalaang lokal.
+        </div>
+    </div>
+</div>
+
+<script>
+    function generatePDFFromModal() {
+        var status = document.getElementById('downloadStatus');
+        var element = document.getElementById('pdfPrintContainer');
+        
+        if (status) status.style.display = 'block';
+
+        var opt = {
+            margin:       [10, 10, 10, 10],
+            filename:     'Barangay_Staff_Report_' + new Date().toISOString().split('T')[0] + '.pdf',
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        html2pdf().set(opt).from(element).save().then(function () {
+            if (status) {
+                status.className = 'small fw-semibold text-success mt-2';
+                status.textContent = 'Na-download na ang Staff PDF Report! ✅';
+            }
+        }).catch(function (err) {
+            if (status) {
+                status.className = 'small fw-semibold text-danger mt-2';
+                status.textContent = 'Nagka-problema sa pagbuo ng PDF.';
+            }
+        });
+    }
+</script>

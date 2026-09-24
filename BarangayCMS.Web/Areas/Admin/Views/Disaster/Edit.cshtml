@@ -1,6 +1,5 @@
 ﻿@model BarangayCMS.Web.Areas.Admin.Models.DisasterViewModel
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
-
 @{
     Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
     ViewData["Title"] = "I-edit ang Insidente";
@@ -30,7 +29,14 @@
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label asp-for="DateOccurred" class="form-label fw-bold"></label>
-                        <input asp-for="DateOccurred" class="form-control" />
+                        <!-- Inayos para minutes lang (HH:mm) at step="60" para harangan ang seconds/milliseconds -->
+                        <input type="datetime-local" 
+                               id="DateOccurred" 
+                               name="DateOccurred" 
+                               value="@Model.DateOccurred.ToString("yyyy-MM-ddTHH:mm")" 
+                               step="60" 
+                               class="form-control" 
+                               required />
                         <span asp-validation-for="DateOccurred" class="text-danger"></span>
                     </div>
                     <div class="col-md-6 mb-3">

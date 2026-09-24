@@ -1,15 +1,18 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using BarangayCMS.BLL.Interfaces;
-using BarangayCMS.DAL.Context; // Namespace ng iyong DBContext
+using BarangayCMS.DAL.Context;
 using BarangayCMS.DTO;
-using BarangayCMS.Entities;   // Namespace ng iyong Entities
+using BarangayCMS.Entities;
 
 namespace BarangayManagementSystem.Controllers.Admin
 {
-    [Area("Admin")] // 🌟 NAPAKAHALAGA: Ito ang lulutas sa iyong 404 Error!
-    // [Authorize(Roles = "Admin,Captain")] // (Opsyonal) Siguraduhing admin lang ang makakapasok
+    [Area("Admin")]
     public class AdminCertificateTypesController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -46,36 +49,30 @@ namespace BarangayManagementSystem.Controllers.Admin
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(
-     [Bind("CertificateTypeId,CertificateName,Price")] CertificateType certificateType,
-     IFormFile? TemplateFile) // 🌟 Tinatanggap na dito ang uploaded Word file
+            [Bind("CertificateTypeId,CertificateName,Price")] CertificateType certificateType,
+            IFormFile? TemplateFile)
         {
-            // Burahin muna ang tracking/navigation validation errors
             ModelState.Clear();
 
             if (certificateType.CertificateName != null)
             {
-                // 🌟 CODE PARA SA PAG-SAVE NG FILE SA SERVER
                 if (TemplateFile != null && TemplateFile.Length > 0)
                 {
-                    // Gumawa ng folder na 'templates' sa loob ng wwwroot kung wala pa ito
                     var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "templates");
                     if (!Directory.Exists(uploadsFolder))
                     {
                         Directory.CreateDirectory(uploadsFolder);
                     }
 
-                    // Gagawa ng unique file name gamit ang Guid para walang maging kapareho
                     var fileExtension = Path.GetExtension(TemplateFile.FileName);
                     var uniqueFileName = Guid.NewGuid().ToString() + fileExtension;
                     var filePath = Path.Combine(uploadsFolder, uniqueFileName);
 
-                    // Isusulat at isasave ang file sa wwwroot/templates folder
                     using (var fileStream = new FileStream(filePath, FileMode.Create))
                     {
                         await TemplateFile.CopyToAsync(fileStream);
                     }
 
-                    // Isasave ang file name sa DB model para madaling mahanap mamaya kapag mag-pi-print
                     certificateType.TemplateFileName = uniqueFileName;
                 }
 
@@ -108,16 +105,13 @@ namespace BarangayManagementSystem.Controllers.Admin
         // ==========================================
         // 5. PAG-SAVE NG BINAGO (EDIT - POST)
         // ==========================================
-        // 5. PAG-SAVE NG BINAGO (EDIT - POST)
-        // ==========================================
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(
             int id,
             [Bind("CertificateTypeId,CertificateName,Price,TemplateFileName")] CertificateType certificateType,
-            IFormFile? TemplateFile) // 🌟 Tinatanggap na rin ang uploaded file rito
+            IFormFile? TemplateFile)
         {
-            // The form posts the PK as "CertificateTypeId" (not a route "id"), so id can be 0.
             if (id == 0) id = certificateType.CertificateTypeId;
 
             if (id != certificateType.CertificateTypeId)
@@ -125,14 +119,12 @@ namespace BarangayManagementSystem.Controllers.Admin
                 return NotFound();
             }
 
-            // Burahin ang tracking validation errors para sa kaligtasan
             ModelState.Clear();
 
             if (certificateType.CertificateName != null)
             {
                 try
                 {
-                    // 🌟 CODE PARA SA PAG-UPDATE NG FILE SA SERVER
                     if (TemplateFile != null && TemplateFile.Length > 0)
                     {
                         var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "templates");
@@ -141,13 +133,31 @@ namespace BarangayManagementSystem.Controllers.Admin
                             Directory.CreateDirectory(uploadsFolder);
                         }
 
-                        // A. Burahin ang lumang file kung meron man para iwas kalat sa server
+                        // A. Burahin ang lumang file nang may panangga sa lock at permission errors
                         if (!string.IsNullOrEmpty(certificateType.TemplateFileName))
                         {
                             var oldFilePath = Path.Combine(uploadsFolder, certificateType.TemplateFileName);
+
                             if (System.IO.File.Exists(oldFilePath))
                             {
-                                System.IO.File.Delete(oldFilePath);
+                                try
+                                {
+                                    // Alisin muna ang Read-Only attribute sa file kung nakakabit
+                                    System.IO.File.SetAttributes(oldFilePath, FileAttributes.Normal);
+
+                                    // Subukang i-delete ang lumang file
+                                    System.IO.File.Delete(oldFilePath);
+                                }
+                                catch (IOException ex)
+                                {
+                                    // Kapag naka-lock sa MS Word o ibang app, i-log lang at ituloy ang upload
+                                    System.Diagnostics.Debug.WriteLine($"Hindi ma-delete ang lumang file dahil ginagamit pa: {ex.Message}");
+                                }
+                                catch (UnauthorizedAccessException ex)
+                                {
+                                    // Kapag may permission restriction
+                                    System.Diagnostics.Debug.WriteLine($"Walang permission para idelete ang file: {ex.Message}");
+                                }
                             }
                         }
 
@@ -161,7 +171,7 @@ namespace BarangayManagementSystem.Controllers.Admin
                             await TemplateFile.CopyToAsync(fileStream);
                         }
 
-                        // C. Ituro ang bagong file name sa database
+                        // C. I-update ang file name sa DB
                         certificateType.TemplateFileName = uniqueFileName;
                     }
 

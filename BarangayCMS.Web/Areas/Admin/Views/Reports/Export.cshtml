@@ -4,91 +4,152 @@
 }
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="utf-8" />
-    <title>Barangay CMS - Executive Summary Report</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
+    <title>Barangay Executive Summary Report</title>
+    <!-- html2pdf Library para sa auto-download ng PDF file -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
-            @@media print {
-                .no-print {
-                    display: none !important;
-                }
-
-                body {
-                    font-size: 12pt;
-                    background-color: white !important;
-                }
-            }
-
-            .report-header {
-                border-bottom: 2px solid #333;
-                padding-bottom: 10px;
-                margin-bottom: 20px;
-            }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #1e293b;
+            background-color: #ffffff;
+            margin: 0;
+            padding: 30px;
+        }
+        .report-header {
+            text-align: center;
+            border-bottom: 2px solid #0f172a;
+            padding-bottom: 12px;
+            margin-bottom: 25px;
+        }
+        .report-title {
+            font-size: 22px;
+            font-weight: 800;
+            color: #0f172a;
+            letter-spacing: 1px;
+            margin: 0;
+            text-transform: uppercase;
+        }
+        .report-subtitle {
+            font-size: 14px;
+            color: #475569;
+            margin-top: 4px;
+        }
+        .report-date {
+            font-size: 11px;
+            color: #64748b;
+            margin-top: 6px;
+        }
+        .section-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #0f172a;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            letter-spacing: 0.5px;
+        }
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+        .report-table th, .report-table td {
+            border: 1px solid #cbd5e1;
+            padding: 10px 12px;
+            font-size: 13px;
+        }
+        .report-table th {
+            background-color: #0f172a;
+            color: #ffffff;
+            text-align: left;
+            font-weight: 600;
+        }
+        .report-table td.value-col {
+            text-align: right;
+            font-weight: 700;
+        }
+        .report-footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 11px;
+            color: #64748b;
+            font-style: italic;
+        }
     </style>
 </head>
-<body class="p-5" onload="window.print()">
-    <div class="no-print mb-4 d-flex justify-content-between align-items-center">
-        <div>
-            <button onclick="window.print()" class="btn btn-primary"><i class="bi bi-printer"></i> Print / Save as PDF</button>
-            <button onclick="window.close()" class="btn btn-secondary">Close Window</button>
+<body>
+
+    <div id="pdf-content">
+        <div class="report-header">
+            <h1 class="report-title">BARANGAY MANAGEMENT SYSTEM</h1>
+            <div class="report-subtitle">Executive Analytics & Summary Report</div>
+            <div class="report-date">Generated on: @DateTime.Now.ToString("MMMM dd, yyyy - hh:mm tt")</div>
         </div>
-        <small class="text-muted">Tip: Gamitin ang "Save as PDF" sa destination drop-down ng browser.</small>
-    </div>
 
-    <div class="report-header text-center">
-        <h3 class="fw-bold text-uppercase mb-1">Barangay Management System</h3>
-        <h5 class="text-secondary mb-2">Executive Analytics & Summary Report</h5>
-        <p class="text-muted small mb-0">Generated on: @DateTime.Now.ToString("MMMM dd, yyyy - hh:mm tt")</p>
-    </div>
+        <div class="section-title">SYSTEM METRICS OVERVIEW</div>
+        <table class="report-table">
+            <thead>
+                <tr>
+                    <th>Metric Category</th>
+                    <th style="text-align: right;">Current Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Total Registered Residents</td>
+                    <td class="value-col">@Model.TotalResidents.ToString("N0")</td>
+                </tr>
+                <tr>
+                    <td>Total Blotter & Incident Cases Logged</td>
+                    <td class="value-col">@Model.TotalComplaints.ToString("N0")</td>
+                </tr>
+                <tr>
+                    <td>Total Approved Budget Allocation</td>
+                    <td class="value-col">₱@Model.TotalBudget.ToString("N2")</td>
+                </tr>
+                <tr>
+                    <td>Total Official Certificates Issued</td>
+                    <td class="value-col">@Model.TotalCertificatesIssued.ToString("N0")</td>
+                </tr>
+                <tr>
+                    <td>Active / Ongoing Infrastructure Projects</td>
+                    <td class="value-col">@Model.ActiveProjects.ToString("N0")</td>
+                </tr>
+                <tr>
+                    <td>Active Evacuees Logged</td>
+                    <td class="value-col">@Model.ActiveEvacuees.ToString("N0")</td>
+                </tr>
+                <tr>
+                    <td>Total Health Center Records</td>
+                    <td class="value-col">@Model.TotalHealthRecords.ToString("N0")</td>
+                </tr>
+            </tbody>
+        </table>
 
-    <div class="row my-4">
-        <div class="col-12">
-            <h6 class="fw-bold text-uppercase border-bottom pb-2">System Metrics Overview</h6>
-            <table class="table table-bordered align-middle mt-2">
-                <thead class="table-light">
-                    <tr>
-                        <th>Metric Category</th>
-                        <th class="text-end">Current Value</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Total Registered Residents</td>
-                        <td class="text-end fw-bold">@Model.TotalResidents</td>
-                    </tr>
-                    <tr>
-                        <td>Total Blotter & Incident Cases Logged</td>
-                        <td class="text-end fw-bold">@Model.TotalComplaints</td>
-                    </tr>
-                    <tr>
-                        <td>Total Approved Budget Allocation</td>
-                        <td class="text-end fw-bold">₱@Model.TotalBudget.ToString("N2")</td>
-                    </tr>
-                    <tr>
-                        <td>Total Official Certificates Issued</td>
-                        <td class="text-end fw-bold">@Model.TotalCertificatesIssued</td>
-                    </tr>
-                    <tr>
-                        <td>Active / Ongoing Infrastructure Projects</td>
-                        <td class="text-end fw-bold">@Model.ActiveProjects</td>
-                    </tr>
-                    <tr>
-                        <td>Active Evacuees Logged</td>
-                        <td class="text-end fw-bold">@Model.ActiveEvacuees</td>
-                    </tr>
-                    <tr>
-                        <td>Total Health Center Records</td>
-                        <td class="text-end fw-bold">@Model.TotalHealthRecords</td>
-                    </tr>
-                </tbody>
-            </table>
+        <div class="report-footer">
+            This is an official system-generated document from Barangay Management System.
         </div>
     </div>
 
-    <div class="mt-5 pt-4 border-top text-center text-muted small">
-        <p>This is a system-generated document from BarangayCMS.</p>
-    </div>
+    <script>
+        window.onload = function () {
+            const element = document.getElementById('pdf-content');
+            const opt = {
+                margin:       [0.5, 0.5, 0.5, 0.5],
+                filename:     'Barangay_Executive_Summary_Report.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 },
+                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+            };
+
+            // Kusa nitong ida-download ang PDF file sa computer at babalik agad sa Reports page
+            html2pdf().set(opt).from(element).save().then(function () {
+                window.location.href = '/Admin/Reports';
+            });
+        };
+    </script>
+
 </body>
 </html>

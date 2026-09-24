@@ -1,91 +1,180 @@
-@*
-    Floating preset switcher. Rendered on the Home page only — the choice it
-    saves is persisted in localStorage and applies across every page.
-*@
+@* 🔘 FLOATING BUTTON *@
 <button type="button"
-        class="theme-fab"
-        data-theme-fab
-        aria-expanded="false"
-        aria-controls="themePanel"
-        aria-label="Change site appearance"
-        title="Change site appearance">
-    <i class="bi bi-palette-fill" aria-hidden="true"></i>
+        id="btnToggleTheme"
+        onclick="openThemeModal()"
+        title="Change site appearance"
+        style="position: fixed !important; left: 30px !important; bottom: 30px !important; z-index: 9999999 !important; width: 52px; height: 52px; border-radius: 50%; background-color: var(--primary-color, #16a34a); color: #ffffff; border: 3px solid #ffffff; box-shadow: 0 4px 15px rgba(0,0,0,0.35); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.2s ease;">
+    <i class="bi bi-palette-fill fs-5" aria-hidden="true"></i>
 </button>
 
-<div class="theme-panel"
-     id="themePanel"
-     data-theme-panel
-     data-open="false"
-     role="radiogroup"
-     aria-label="Site appearance">
+@* 📦 NATIVE POPUP DIALOG *@
+<dialog id="themeModalDialog" style="border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); width: 310px; max-width: 90vw; background: #ffffff; color: #0f172a; position: fixed; left: 30px; bottom: 95px; margin: 0; z-index: 10000000;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #f1f5f9;">
+        <h6 style="margin: 0; font-weight: 700; color: #0f172a; font-size: 0.95rem;">Site Appearance</h6>
+        <button type="button" onclick="closeThemeModal()" style="border: none; background: transparent; font-size: 1.25rem; cursor: pointer; color: #64748b; line-height: 1;">&times;</button>
+    </div>
 
-    <p class="theme-panel__title">Appearance</p>
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+        <button type="button" class="theme-btn-opt" onclick="applyTheme('civic')">
+            <span style="font-weight: 600; display: block;">Civic Navy</span>
+            <span style="font-size: 0.75rem; color: #64748b; display: block;">Classic layout &middot; Green &amp; Navy</span>
+        </button>
 
-    <button type="button" class="theme-option" data-preset="civic" role="radio" aria-checked="true">
-        <span class="theme-option__swatch" aria-hidden="true">
-            <span style="background:#0d1e3d"></span>
-            <span style="background:#16a34a"></span>
-            <span style="background:#f1f5f9"></span>
-        </span>
-        <span>
-            <span class="theme-option__name">Civic Navy</span>
-            <span class="theme-option__meta">Classic layout &middot; 4-column grid</span>
-        </span>
-        <i class="bi bi-check-circle-fill theme-option__check" aria-hidden="true"></i>
-    </button>
+        <button type="button" class="theme-btn-opt" onclick="applyTheme('coastal')">
+            <span style="font-weight: 600; display: block;">Coastal Teal</span>
+            <span style="font-size: 0.75rem; color: #64748b; display: block;">Teal Hero &middot; Warm Amber</span>
+        </button>
 
-    <button type="button" class="theme-option" data-preset="coastal" role="radio" aria-checked="false">
-        <span class="theme-option__swatch" aria-hidden="true">
-            <span style="background:#0f766e"></span>
-            <span style="background:#f59e0b"></span>
-            <span style="background:#fdfcf7"></span>
-        </span>
-        <span>
-            <span class="theme-option__name">Coastal Teal</span>
-            <span class="theme-option__meta">Split hero &middot; 2-column cards</span>
-        </span>
-        <i class="bi bi-check-circle-fill theme-option__check" aria-hidden="true"></i>
-    </button>
+        <button type="button" class="theme-btn-opt" onclick="applyTheme('midnight')">
+            <span style="font-weight: 600; display: block;">Midnight Slate</span>
+            <span style="font-size: 0.75rem; color: #64748b; display: block;">Dark mode &middot; Slate &amp; Indigo</span>
+        </button>
 
-    <button type="button" class="theme-option" data-preset="midnight" role="radio" aria-checked="false">
-        <span class="theme-option__swatch" aria-hidden="true">
-            <span style="background:#0b1120"></span>
-            <span style="background:#6366f1"></span>
-            <span style="background:#151d2e"></span>
-        </span>
-        <span>
-            <span class="theme-option__name">Midnight Slate</span>
-            <span class="theme-option__meta">Compact dark &middot; list rows</span>
-        </span>
-        <i class="bi bi-check-circle-fill theme-option__check" aria-hidden="true"></i>
-    </button>
+        <button type="button" class="theme-btn-opt" onclick="applyTheme('sage')">
+            <span style="font-weight: 600; display: block;">Sage Garden</span>
+            <span style="font-size: 0.75rem; color: #64748b; display: block;">Soft green &middot; Calm tone</span>
+        </button>
 
-    <button type="button" class="theme-option" data-preset="sage" role="radio" aria-checked="false">
-        <span class="theme-option__swatch" aria-hidden="true">
-            <span style="background:#3d6b52"></span>
-            <span style="background:#4f9e77"></span>
-            <span style="background:#f2f7f3"></span>
-        </span>
-        <span>
-            <span class="theme-option__name">Sage Garden</span>
-            <span class="theme-option__meta">Soft green &middot; light &amp; calm</span>
-        </span>
-        <i class="bi bi-check-circle-fill theme-option__check" aria-hidden="true"></i>
-    </button>
+        <button type="button" class="theme-btn-opt" onclick="applyTheme('lilac')">
+            <span style="font-weight: 600; display: block;">Lilac Mist</span>
+            <span style="font-size: 0.75rem; color: #64748b; display: block;">Lavender theme &middot; Light &amp; airy</span>
+        </button>
+    </div>
+</dialog>
 
-    <button type="button" class="theme-option" data-preset="lilac" role="radio" aria-checked="false">
-        <span class="theme-option__swatch" aria-hidden="true">
-            <span style="background:#5a4fa3"></span>
-            <span style="background:#6d5fc4"></span>
-            <span style="background:#f6f5fb"></span>
-        </span>
-        <span>
-            <span class="theme-option__name">Lilac Mist</span>
-            <span class="theme-option__meta">Gentle lavender &middot; airy</span>
-        </span>
-        <i class="bi bi-check-circle-fill theme-option__check" aria-hidden="true"></i>
-    </button>
-</div>
+@* 🎨 THEME CSS VARIABLES AND OVERRIDES *@
+<style>
+    /* --- 1. DEFAULT / CIVIC NAVY --- */
+    :root, html[data-theme="civic"] {
+        --primary-color: #16a34a;
+        --hero-bg: #0d1e3d;
+        --card-bg: #ffffff;
+        --text-color: #0f172a;
+        --bg-surface: #f8fafc;
+        --border-color: #e2e8f0;
+    }
 
-@* The host view is responsible for calling BmsTheme.initSwitcher() in its
-   Scripts section — Razor partials cannot define sections themselves. *@
+    /* --- 2. COASTAL TEAL --- */
+    html[data-theme="coastal"] {
+        --primary-color: #d97706;
+        --hero-bg: #0f766e;
+        --card-bg: #ffffff;
+        --text-color: #134e4a;
+        --bg-surface: #f0fdf4;
+        --border-color: #ccfbf1;
+    }
+
+    /* --- 3. MIDNIGHT SLATE (DARK MODE) --- */
+    html[data-theme="midnight"] {
+        --primary-color: #6366f1;
+        --hero-bg: #0b1120;
+        --card-bg: #1e293b;
+        --text-color: #f8fafc;
+        --bg-surface: #0f172a;
+        --border-color: #334155;
+    }
+
+    /* --- 4. SAGE GARDEN --- */
+    html[data-theme="sage"] {
+        --primary-color: #2e7d32;
+        --hero-bg: #1b4332;
+        --card-bg: #ffffff;
+        --text-color: #1c3327;
+        --bg-surface: #f2f7f3;
+        --border-color: #d8f3dc;
+    }
+
+    /* --- 5. LILAC MIST --- */
+    html[data-theme="lilac"] {
+        --primary-color: #7c3aed;
+        --hero-bg: #4c1d95;
+        --card-bg: #ffffff;
+        --text-color: #2d2459;
+        --bg-surface: #f6f5fb;
+        --border-color: #ddd6fe;
+    }
+
+    /* --- GLOBAL COMPONENT APPLIERS --- */
+    body {
+        background-color: var(--bg-surface) !important;
+        color: var(--text-color) !important;
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    .hero {
+        background-color: var(--hero-bg) !important;
+        transition: background-color 0.3s ease;
+    }
+
+    .btn-hero-primary {
+        background-color: var(--primary-color) !important;
+        border-color: var(--primary-color) !important;
+    }
+
+    .module, 
+    .panel, 
+    .stats,
+    .hero__figure {
+        background-color: var(--card-bg) !important;
+        color: var(--text-color) !important;
+        border-color: var(--border-color) !important;
+        transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+    }
+
+    .section--alt {
+        background-color: var(--bg-surface) !important;
+    }
+
+    .theme-btn-opt {
+        text-align: left;
+        padding: 9px 12px;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        background: #f8fafc;
+        cursor: pointer;
+        width: 100%;
+        transition: all 0.2s ease;
+    }
+
+    .theme-btn-opt:hover {
+        background: #f1f5f9;
+        border-color: #cbd5e1;
+    }
+
+    dialog::backdrop {
+        background: rgba(0, 0, 0, 0.2);
+    }
+</style>
+
+@* ⚡ JAVASCRIPT CONTROLLER *@
+<script>
+    function openThemeModal() {
+        const dialog = document.getElementById('themeModalDialog');
+        if (dialog) {
+            if (dialog.hasAttribute('open')) {
+                dialog.close();
+            } else {
+                dialog.show();
+            }
+        }
+    }
+
+    function closeThemeModal() {
+        const dialog = document.getElementById('themeModalDialog');
+        if (dialog) dialog.close();
+    }
+
+    function applyTheme(themeName) {
+        document.documentElement.setAttribute('data-theme', themeName);
+        document.body.setAttribute('data-theme', themeName);
+        localStorage.setItem('bms_theme_preset', themeName);
+        closeThemeModal();
+    }
+
+    // Immediately load saved theme
+    (function () {
+        const savedTheme = localStorage.getItem('bms_theme_preset') || 'civic';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        document.body.setAttribute('data-theme', savedTheme);
+    })();
+</script>

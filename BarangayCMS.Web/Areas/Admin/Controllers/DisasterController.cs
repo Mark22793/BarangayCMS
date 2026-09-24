@@ -24,7 +24,6 @@ namespace BarangayCMS.Web.Areas.Admin.Controllers
         private readonly IStringLocalizer<SharedResource> _localizer;
         private readonly ILogger<DisasterController> _logger;
 
-        // Ang Emergency SMS feature ay para LAMANG sa Admin (RBAC).
         private const string AdminRoles = "Admin,SuperAdmin";
 
         public DisasterController(
@@ -41,7 +40,12 @@ namespace BarangayCMS.Web.Areas.Admin.Controllers
             _logger = logger;
         }
 
-        // Helper: nakikita ba ng kasalukuyang user ang Emergency SMS feature?
+        // Helper Method: Pilit na tinatapyas ang seconds at milliseconds sa 00
+        private static DateTime TrimToMinutes(DateTime date)
+        {
+            return new DateTime(date.Year, date.Month, date.Day, date.Hour, date.Minute, 0, 0);
+        }
+
         private bool IsAdminUser() => User.IsInRole("Admin") || User.IsInRole("SuperAdmin");
 
         // 1. GET: Admin/Disaster
@@ -53,19 +57,14 @@ namespace BarangayCMS.Web.Areas.Admin.Controllers
                 {
                     Id = d.DisasterId,
                     DisasterType = d.DisasterType,
-                    // Pinapakita ang maikling detalye
                     Description = d.IncidentName,
-
-                    // 🔑 LUNAS: Kung may ' | ' sa IncidentName, kukunin ang lokasyon. Kung wala, gagamit ng fallback text.
                     Location = d.IncidentName.Contains(" | Lokasyon: ")
                         ? d.IncidentName.Split(new string[] { " | Lokasyon: " }, StringSplitOptions.None)[1]
                         : "Barangay Jurisdiction",
-
-                    DateOccurred = d.OccurrenceDate,
+                    DateOccurred = TrimToMinutes(d.OccurrenceDate),
                     Status = $"Relief: {d.ReliefDistributionStatus} | Evac: {d.EvacuationCenterStatus}"
                 }).ToListAsync();
 
-            // 📱 Emergency SMS feature data — para LAMANG sa Admin
             if (IsAdminUser())
             {
                 await PopulateEmergencySmsViewDataAsync();
@@ -74,10 +73,6 @@ namespace BarangayCMS.Web.Areas.Admin.Controllers
             return View(disasters);
         }
 
-        // ==========================================================
-        // Helper: i-load ang Purok list, resident options, at SMS history
-        // para sa Emergency Notification section ng Disaster/Index page.
-        // ==========================================================
         private async Task PopulateEmergencySmsViewDataAsync()
         {
             var residents = await _context.Residents
@@ -141,7 +136,7 @@ namespace BarangayCMS.Web.Areas.Admin.Controllers
                 DisasterType = disaster.DisasterType,
                 Description = disaster.IncidentName.Split(new string[] { " | Lokasyon: " }, StringSplitOptions.None)[0],
                 Location = locationText,
-                DateOccurred = disaster.OccurrenceDate,
+                DateOccurred = TrimToMinutes(disaster.OccurrenceDate),
                 Status = $"Relief: {disaster.ReliefDistributionStatus} | Evac: {disaster.EvacuationCenterStatus}"
             };
 
@@ -151,7 +146,7 @@ namespace BarangayCMS.Web.Areas.Admin.Controllers
         // 3. GET: Admin/Disaster/Create
         public IActionResult Create()
         {
-            return View(new DisasterViewModel { DateOccurred = DateTime.Now });
+            return View(new DisasterViewModel { DateOccurred = TrimToMinutes(DateTime.Now) });
         }
 
         // 4. POST: Admin/Disaster/Create
@@ -161,7 +156,6 @@ namespace BarangayCMS.Web.Areas.Admin.Controllers
         {
             if (ModelState.IsValid)
             {
-                // 🔑 LUNAS: Pagsasamahin natin ang Description at Location sa loob ng IncidentName (dahil walang Location field ang database)
                 string fullIncidentDetails = !string.IsNullOrEmpty(model.Description) ? model.Description : $"{model.DisasterType} Incident";
                 if (!string.IsNullOrEmpty(model.Location))
                 {
@@ -170,18 +164,16 @@ namespace BarangayCMS.Web.Areas.Admin.Controllers
 
                 var disaster = new Disaster
                 {
-                    IncidentName = fullIncidentDetails, // Dito itatago ang description at location
+                    IncidentName = fullIncidentDetails,
                     DisasterType = model.DisasterType,
-                    OccurrenceDate = model.DateOccurred,
+                    OccurrenceDate = TrimToMinutes(model.DateOccurred),
 
-                    // Default values para sa entity metrics
                     AffectedHouseholdsCount = 0,
                     DisplacedIndividualsCount = 0,
                     CasualtiesCount = 0,
                     EvacuationCenterStatus = "Open",
                     ReliefDistributionStatus = "Ongoing",
 
-                    // Metadata tracking logs
                     LoggedBy = User.Identity?.Name ?? "Admin",
                     DateCreated = DateTime.Now
                 };
@@ -217,7 +209,7 @@ namespace BarangayCMS.Web.Areas.Admin.Controllers
                 DisasterType = disaster.DisasterType,
                 Description = cleanDescription,
                 Location = cleanLocation,
-                DateOccurred = disaster.OccurrenceDate,
+                DateOccurred = TrimToMinutes(disaster.OccurrenceDate),
                 Status = disaster.ReliefDistributionStatus
             };
 
@@ -238,7 +230,6 @@ namespace BarangayCMS.Web.Areas.Admin.Controllers
                     var disaster = await _context.Disasters.FindAsync(id);
                     if (disaster == null) return NotFound();
 
-                    // 🔑 LUNAS: Muling pagsasamahin ang binagong Description at Location para mai-save
                     string fullIncidentDetails = !string.IsNullOrEmpty(model.Description) ? model.Description : $"{model.DisasterType} Incident";
                     if (!string.IsNullOrEmpty(model.Location))
                     {
@@ -247,9 +238,8 @@ namespace BarangayCMS.Web.Areas.Admin.Controllers
 
                     disaster.IncidentName = fullIncidentDetails;
                     disaster.DisasterType = model.DisasterType;
-                    disaster.OccurrenceDate = model.DateOccurred;
+                    disaster.OccurrenceDate = TrimToMinutes(model.DateOccurred);
 
-                    // Pagpapanatili ng tracking controls
                     disaster.LoggedBy = User.Identity?.Name ?? "Admin";
                     disaster.DateUpdated = DateTime.Now;
 
@@ -266,12 +256,7 @@ namespace BarangayCMS.Web.Areas.Admin.Controllers
             return View(model);
         }
 
-        // ==========================================================
-        // 🏫 EVACUATION CENTERS MANAGEMENT (database-driven)
-        // Ito ang IISANG pinagmumulan ng datos para sa Public Evacuation view.
-        // ==========================================================
-
-        // 7. GET: Admin/Disaster/EvacuationCenters
+        // 7. Evacuation centers management methods
         public async Task<IActionResult> EvacuationCenters()
         {
             var centers = await _evacuationService.GetAllCentersAsync();
@@ -279,7 +264,6 @@ namespace BarangayCMS.Web.Areas.Admin.Controllers
             return View(centers);
         }
 
-        // 7a. POST: Admin/Disaster/CreateEvacuationCenter
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateEvacuationCenter(EvacuationCenterDTO model)
@@ -297,7 +281,6 @@ namespace BarangayCMS.Web.Areas.Admin.Controllers
             return RedirectToAction(nameof(EvacuationCenters));
         }
 
-        // 7b. POST: Admin/Disaster/EditEvacuationCenter
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditEvacuationCenter(EvacuationCenterDTO model)
@@ -315,7 +298,6 @@ namespace BarangayCMS.Web.Areas.Admin.Controllers
             return RedirectToAction(nameof(EvacuationCenters));
         }
 
-        // 7c. POST: Admin/Disaster/ToggleEvacuationCenter
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ToggleEvacuationCenter(int id)
@@ -327,7 +309,6 @@ namespace BarangayCMS.Web.Areas.Admin.Controllers
             return RedirectToAction(nameof(EvacuationCenters));
         }
 
-        // 7d. POST: Admin/Disaster/DeleteEvacuationCenter
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteEvacuationCenter(int id)
@@ -339,7 +320,6 @@ namespace BarangayCMS.Web.Areas.Admin.Controllers
             return RedirectToAction(nameof(EvacuationCenters));
         }
 
-        // 7e. POST: Admin/Disaster/UpdateEvacuationStatus
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateEvacuationStatus(EvacuationStatusDTO model)
@@ -352,7 +332,6 @@ namespace BarangayCMS.Web.Areas.Admin.Controllers
             return RedirectToAction(nameof(EvacuationCenters));
         }
 
-        // 8. GET: Admin/Disaster/HazardMaps
         public IActionResult HazardMaps()
         {
             return View();
@@ -375,7 +354,7 @@ namespace BarangayCMS.Web.Areas.Admin.Controllers
                 Id = disaster.DisasterId,
                 DisasterType = disaster.DisasterType,
                 Location = cleanLocation,
-                DateOccurred = disaster.OccurrenceDate
+                DateOccurred = TrimToMinutes(disaster.OccurrenceDate)
             };
 
             return View(viewModel);
@@ -395,17 +374,7 @@ namespace BarangayCMS.Web.Areas.Admin.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // ==========================================================
-        // 📱 EMERGENCY SMS ALERT (ADMIN ONLY)
-        // Bahagi ng Disaster Risk Management module.
-        // ==========================================================
-
-        // ==========================================================
-        // Helper: resolve recipients mula sa DB base sa napiling scope.
-        // Ibinabalik ang lahat ng non-blank contact numbers, ang label ng
-        // recipient group, at (kung meron) ang validation error message.
-        // Iisang source ito para sa Preview at Send — walang duplicate logic.
-        // ==========================================================
+        // SMS Methods
         private async Task<(List<string> Numbers, string Label, string? Error)> ResolveRecipientsAsync(EmergencySmsViewModel model)
         {
             var residentsQuery = _context.Residents.Where(r => r.IsResident);
@@ -427,7 +396,7 @@ namespace BarangayCMS.Web.Areas.Admin.Controllers
                     label = $"Selected Residents ({model.SelectedResidentIds.Count})";
                     break;
 
-                default: // "All Residents"
+                default:
                     label = "All Residents";
                     break;
             }
@@ -440,13 +409,11 @@ namespace BarangayCMS.Web.Areas.Admin.Controllers
             return (numbers, label, null);
         }
 
-        // Bumubuo ng label ng emergency type na may kasamang severity (kung meron).
         private static string BuildEmergencyLabel(EmergencySmsViewModel model) =>
             string.IsNullOrWhiteSpace(model.Severity)
                 ? model.EmergencyType
                 : $"{model.EmergencyType} — {model.Severity}";
 
-        // 11a. POST: Admin/Disaster/PreviewEmergencyAlert (JSON — para sa recipient count preview)
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = AdminRoles)]
@@ -458,7 +425,6 @@ namespace BarangayCMS.Web.Areas.Admin.Controllers
                 return Json(new { success = false, message = error });
             }
 
-            // Bilangin gamit ang parehong validation na gagamitin sa aktwal na pagpapadala.
             var distinct = numbers.Where(n => !string.IsNullOrWhiteSpace(n)).Select(n => n.Trim()).Distinct().ToList();
             var totalMatching = distinct.Count;
             var validCount = distinct.Count(n => _semaphoreService.IsValidPhoneNumber(n));
@@ -478,13 +444,11 @@ namespace BarangayCMS.Web.Areas.Admin.Controllers
             });
         }
 
-        // 11. POST: Admin/Disaster/SendEmergencyAlert
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = AdminRoles)]
         public async Task<IActionResult> SendEmergencyAlert(EmergencySmsViewModel model)
         {
-            // Server-side validation — huwag umasa sa UI lamang
             if (string.IsNullOrWhiteSpace(model.EmergencyType) || string.IsNullOrWhiteSpace(model.Message))
             {
                 TempData["SmsError"] = "Kailangan ang Emergency Type at Message bago magpadala.";
@@ -494,7 +458,6 @@ namespace BarangayCMS.Web.Areas.Admin.Controllers
             var sentBy = User.Identity?.Name ?? "Admin";
             var emergencyLabel = BuildEmergencyLabel(model);
 
-            // 1. Kunin ang mga contact number base sa napiling recipient group
             var (numbers, recipientGroupLabel, error) = await ResolveRecipientsAsync(model);
             if (error != null)
             {
@@ -508,11 +471,6 @@ namespace BarangayCMS.Web.Areas.Admin.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            // 1b. 🔒 DUPLICATE PROTECTION (idempotency): iwasan ang aksidenteng dobleng
-            // blast mula sa double-click o network timeout retry. Kung may kaparehong
-            // broadcast (parehong sender, mensahe, at recipient group) sa nakaraang 2
-            // minuto, huwag nang magpadala ulit. Pinapayagan pa rin ang sadyang
-            // follow-up alert (ibang mensahe o pagkalipas ng 2 minuto).
             var duplicateWindow = DateTime.Now.AddMinutes(-2);
             bool isDuplicate = await _context.SmsAlerts.AnyAsync(a =>
                 a.SentBy == sentBy &&
@@ -526,11 +484,8 @@ namespace BarangayCMS.Web.Areas.Admin.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            // 2. Ipadala gamit ang Semaphore (may validation + error handling sa service)
             var result = await _semaphoreService.SendBulkSmsAsync(numbers, model.Message);
 
-            // 3. I-record sa SMS Alert History (WALANG API key na itinatago dito).
-            //    Ito rin ang audit trail: sino (SentBy), kailan (SentAt), ano, at resulta.
             var alert = new SmsAlert
             {
                 EmergencyType = emergencyLabel,
@@ -546,7 +501,6 @@ namespace BarangayCMS.Web.Areas.Admin.Controllers
             _context.SmsAlerts.Add(alert);
             await _context.SaveChangesAsync();
 
-            // 4. Ibalik ang resulta sa user
             if (result.Status == "Sent")
             {
                 TempData["SmsSuccess"] = $"Matagumpay na naipadala ang emergency alert sa {result.SuccessCount} residente.";
@@ -563,7 +517,6 @@ namespace BarangayCMS.Web.Areas.Admin.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // 12. GET: Admin/Disaster/SmsHistory (buong history view — Admin only)
         [HttpGet]
         [Authorize(Roles = AdminRoles)]
         public async Task<IActionResult> SmsHistory()
@@ -588,9 +541,6 @@ namespace BarangayCMS.Web.Areas.Admin.Controllers
             return View(history);
         }
 
-        // 13. POST: Admin/Disaster/DeleteSmsAlert — burahin ang IISANG SMS Alert
-        // History record gamit ang tunay na primary key (SmsAlertId). Admin-only,
-        // may anti-forgery, at hindi ito nakakaapekto sa Semaphore/SMS sending.
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = AdminRoles)]
@@ -598,13 +548,9 @@ namespace BarangayCMS.Web.Areas.Admin.Controllers
         {
             try
             {
-                // Hanapin gamit ang PK. Ang SmsAlert ay standalone log — walang
-                // related/child records kaya ligtas ang direktang pagbura.
                 var alert = await _context.SmsAlerts.FindAsync(id);
                 if (alert == null)
                 {
-                    // Wala na ang record (hal. dobleng submit / na-delete na) — huwag
-                    // magbagsak ng exception; ibalik lang nang malinis.
                     TempData["SmsError"] = _localizer["Sms.DeleteError"].Value;
                     return RedirectToAction(nameof(Index));
                 }
@@ -616,7 +562,6 @@ namespace BarangayCMS.Web.Areas.Admin.Controllers
             }
             catch (Exception ex)
             {
-                // I-log ang tunay na teknikal na error; HUWAG ipakita sa user.
                 _logger.LogError(ex, "Failed to delete SmsAlert {SmsAlertId}", id);
                 TempData["SmsError"] = _localizer["Sms.DeleteError"].Value;
             }
